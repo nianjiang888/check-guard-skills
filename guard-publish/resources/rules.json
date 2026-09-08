@@ -1,0 +1,146 @@
+{
+  "version": "2.0.0",
+  "name": "guard-publish 发布前合规检查规则库",
+  "allowlist": {
+    "paths": []
+  },
+  "rules": [
+    {
+      "id": "PUB-NO-META",
+      "name": "发布元信息缺失（版本/更新日志/授权）",
+      "layer": "meta",
+      "category": "发布清单",
+      "severity": "中",
+      "intent": "对外发布的内容/工具，通篇找不到版本号、更新日志、授权协议中的任何一个——使用者无法知道用的是哪一版、改了什么、能不能用",
+      "recoverable": true,
+      "note": "建议：发布前补齐版本号 + 更新日志 + 授权说明，三件套是发布清单的底线项",
+      "req_regex": "(?:功能|用途|产品介绍|项目介绍|使用说明|简介|概述)",
+      "absent_patterns": ["version", "版本号", "版本", "changelog", "更新日志", "变更记录", "license", "授权", "版权", "copyright"]
+    },
+    {
+      "id": "PUB-SUPERLATIVE",
+      "name": "广告法极限词",
+      "layer": "content",
+      "category": "内容合规",
+      "severity": "高",
+      "intent": "最好/最佳/国家级/世界级/顶级/全网最低/绝对 这类极限表述，是广告法明令禁止的绝对化用语，发布即可能被投诉或处罚",
+      "recoverable": true,
+      "note": "建议：改为可验证的客观描述（如「实测耗时 3 秒」），删掉绝对化与最高级表述",
+      "pattern": "(?:最好的|最佳|最强|最好用|第一品牌|国家级|世界级|世界一流|顶级|顶尖|史无前例|绝无仅有|全网最低|全网第一|绝对|永久有效|100%有效|唯一指定)"
+    },
+    {
+      "id": "PUB-MEDICAL-CLAIM",
+      "name": "医疗疗效承诺",
+      "layer": "content",
+      "category": "内容合规",
+      "severity": "极端",
+      "intent": "根治/包治/无副作用/立竿见影/保证治愈 这类疗效承诺，属违法医疗广告表述，涉及公众健康且后果不可逆",
+      "recoverable": true,
+      "note": "建议：删除一切疗效与安全性承诺；涉及健康的内容必须加免责声明与就医提示",
+      "pattern": "(?:彻底根治|根治|药到病除|包治|无副作用|无任何副作用|立竿见影|彻底康复|告别病痛|保证治愈|治愈率\\s*\\d)"
+    },
+    {
+      "id": "PUB-INVEST-CLAIM",
+      "name": "投资收益承诺",
+      "layer": "content",
+      "category": "内容合规",
+      "severity": "极端",
+      "intent": "保本/稳赚/包赚/零风险/保证收益/翻倍 这类收益承诺，触碰非法集资与金融广告红线，属最严重的合规问题",
+      "recoverable": true,
+      "note": "建议：删除一切保本保收益表述；金融内容须加「投资有风险」提示并注明不构成投资建议",
+      "pattern": "(?:保本|稳赚|包赚|无风险|零风险|保证收益|年化收益保证|收益保证|翻倍收益|躺赚|必涨|稳赚不赔)"
+    },
+    {
+      "id": "PUB-NO-DISCLAIMER",
+      "name": "涉敏感领域但无免责声明",
+      "layer": "legal",
+      "category": "法律声明",
+      "severity": "高",
+      "intent": "内容涉及医疗/金融/投资/税务/法律意见等敏感领域，却通篇找不到免责声明或风险提示——读者可能当作专业建议采纳",
+      "recoverable": true,
+      "note": "建议：涉及上述领域必须加免责声明（不构成专业意见、请咨询专业人士）与风险提示",
+      "req_regex": "(?:医疗|诊断|用药|治疗|疗效|金融|投资|理财|收益|健康|保健|法律意见|税务筹划)",
+      "absent_patterns": ["免责", "声明", "风险提示", "不构成", "仅供参考", "请咨询", "就医", "专业意见", "投资有风险"]
+    },
+    {
+      "id": "PUB-NO-SOURCE",
+      "name": "引用数据但未标注来源",
+      "layer": "legal",
+      "category": "法律声明",
+      "severity": "中",
+      "intent": "出现「据统计/数据表明/占比 X%」这类量化断言，却没写数据来自哪里——无法核实的数字对外发布，可信度与合规都成问题",
+      "recoverable": true,
+      "note": "建议：每个量化断言标注数据来源与时间范围；引用他人成果注明出处",
+      "req_regex": "(?:据统计|数据表明|调研显示|报告显示|占比|百分比|增长率|同比|环比|\\d+(?:\\.\\d+)?%)",
+      "absent_patterns": ["来源", "出处", "数据来自", "数据来源", "reference", "引用", "参考文献", "参考"]
+    },
+    {
+      "id": "PUB-PII-RAW",
+      "name": "发布内容含未脱敏个人信息",
+      "layer": "privacy",
+      "category": "个人信息",
+      "severity": "极端",
+      "intent": "身份证号、手机号这类强个人信息以明文出现在待发布内容里，一经公开即被抓取扩散，无法收回",
+      "recoverable": false,
+      "note": "建议：发布前一律脱敏（如 110***********1234 / 138****8000）；名单类内容改用汇总统计",
+      "pattern": "\\b\\d{17}[\\dxX]\\b|\\b1[3-9]\\d{9}\\b"
+    },
+    {
+      "id": "PUB-NO-PRIVACY-POLICY",
+      "name": "收集个人信息但无隐私政策",
+      "layer": "privacy",
+      "category": "个人信息",
+      "severity": "高",
+      "intent": "内容涉及手机号/邮箱/姓名/注册登录等个人信息收集，却找不到隐私政策或授权说明——违反个人信息处理的告知同意义务",
+      "recoverable": true,
+      "note": "建议：凡收集个人信息必须公示隐私政策、说明用途与留存期限，并取得同意",
+      "req_regex": "(?:手机号|邮箱|姓名|身份证|注册|登录|个人资料|表单提交)",
+      "absent_patterns": ["隐私政策", "隐私声明", "用户协议", "privacy", "policy", "同意", "授权"]
+    },
+    {
+      "id": "PUB-SECRET-HARDCODE",
+      "name": "密钥/凭据硬编码",
+      "layer": "credential",
+      "category": "凭据与内网",
+      "severity": "极端",
+      "intent": "api_key/secret/token/password 等凭据以明文写在待发布文件里，发布即等于把钥匙交给全世界，只能轮换不能收回",
+      "recoverable": false,
+      "note": "建议：凭据全部移入密钥库/环境变量，文件里只留占位符；已外泄的立即轮换",
+      "pattern": "(?:api_key|apikey|secret|token|password|passwd|pwd|access_key|private_key|credentials)\\s*[=:]\\s*[\"'][^\\s\"']{6,}[\"']"
+    },
+    {
+      "id": "PUB-INTERNAL-ADDR",
+      "name": "内网地址/运维入口暴露",
+      "layer": "credential",
+      "category": "凭据与内网",
+      "severity": "高",
+      "intent": "内网地址、办公网、跳板机、堡垒机、预发布环境这类运维入口写进对外发布内容，等于把内部拓扑摊给外部",
+      "recoverable": false,
+      "note": "建议：发布前清理一切内网标识与运维入口；对外只保留公网可访问的正式入口",
+      "pattern": "(?:内网地址|内网\\s*IP|办公网|OA\\s*地址|VPN\\s*地址|跳板机|堡垒机|预发布环境|staging\\s*环境|internal-[\\w-]+)"
+    },
+    {
+      "id": "PUB-DEBUG-LEFTOVER",
+      "name": "调试开关/测试数据残留",
+      "layer": "credential",
+      "category": "凭据与内网",
+      "severity": "中",
+      "intent": "DEBUG 开关仍为开、测试账号、假数据散落在待发布内容里，是典型的「忘了关」——不致命但很掉价，也可能被利用",
+      "recoverable": true,
+      "note": "建议：发布清单加一条「关调试、清测试账号与假数据」，上线前逐项勾掉",
+      "pattern": "(?:DEBUG\\s*[=:]\\s*(?:True|true|1)|debug\\s*[=:]\\s*true|测试账号|test_account|mock_data|假数据|生产调试)"
+    },
+    {
+      "id": "PUB-SAFE",
+      "name": "免责声明 + 隐私政策 + 版本授权（安全变体）",
+      "layer": "safe",
+      "category": "安全变体",
+      "severity": "低",
+      "intent": "免责声明/风险提示/隐私政策/用户协议/更新日志/授权协议/版本号/数据来源 是对发布内容的正确处置，是好做法，不当命中",
+      "recoverable": true,
+      "note": "鼓励信号",
+      "pattern": "(?:免责声明|风险提示|隐私政策|用户协议|changelog|更新日志|license|授权协议|版本号|数据来源)",
+      "safe_signal": true
+    }
+  ]
+}

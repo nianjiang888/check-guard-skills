@@ -1,0 +1,104 @@
+{
+  "version": "2.0.1",
+  "domain": "accessibility",
+  "layers": [
+    "img",
+    "button",
+    "html",
+    "structure",
+    "safe"
+  ],
+  "rules": [
+    {
+      "id": "A11Y-IMG-NO-ALT",
+      "layer": "img",
+      "kind": "regex",
+      "severity": "高",
+      "ext": [
+        ".html",
+        ".htm",
+        ".jsx",
+        ".tsx",
+        ".vue",
+        ".svelte",
+        ".md"
+      ],
+      "intent": "<img> 缺少 alt 属性，屏幕阅读器无法传达图片内容，视障用户丢失信息",
+      "pattern": "<img(?![^>]*\\balt=)[^>]*>",
+      "recoverable": true,
+      "rec": "为每个 img 补上有意义的 alt 文本"
+    },
+    {
+      "id": "A11Y-BTN-NO-LABEL",
+      "layer": "button",
+      "kind": "regex",
+      "severity": "中",
+      "ext": [
+        ".html",
+        ".htm",
+        ".jsx",
+        ".tsx",
+        ".vue",
+        ".svelte"
+      ],
+      "intent": "<button> 既无文字也无 aria-label，交互目标对辅助技术不可识别",
+      "pattern": "<button(?![^>]*aria-label)[^>]*>\\s*</button>",
+      "recoverable": true,
+      "rec": "为按钮补上可见文字或 aria-label"
+    },
+    {
+      "id": "A11Y-NO-LANG",
+      "layer": "html",
+      "kind": "regex",
+      "severity": "中",
+      "ext": [
+        ".html",
+        ".htm"
+      ],
+      "intent": "<html> 缺少 lang 属性，浏览器/屏幕阅读器无法正确选择语言与发音",
+      "pattern": "<html(?![^>]*\\blang=)[^>]*>",
+      "recoverable": true,
+      "rec": "为 <html> 补上 lang 属性（如 lang=\"zh-CN\"）"
+    },
+    {
+      "id": "A11Y-NO-TITLE",
+      "layer": "html",
+      "kind": "regex",
+      "severity": "低",
+      "ext": [
+        ".html",
+        ".htm"
+      ],
+      "intent": "HTML 文档无 <title>，标签页与书签无标识，可访问性与 SEO 双输",
+      "req_regex": "<html",
+      "absent_patterns": [
+        "(<title>)"
+      ],
+      "recoverable": true,
+      "rec": "补上 <title> 描述页面主题"
+    },
+    {
+      "id": "A11Y-HEADING-SKIP",
+      "layer": "structure",
+      "kind": "heading",
+      "severity": "低",
+      "ext": [
+        ".md",
+        ".html",
+        ".htm"
+      ],
+      "intent": "标题层级跳跃超过一级（如从 h1 直接到 h3），大纲结构断裂、导航困难",
+      "recoverable": true,
+      "rec": "补齐中间层级或调整标题级别"
+    },
+    {
+      "id": "A11Y-CLEAN",
+      "layer": "safe",
+      "kind": "regex",
+      "severity": "低",
+      "intent": "已接入可访问性基线（a11y/accessibility/无障碍），鼓励",
+      "pattern": "(可访问性|a11y|accessibility|无障碍)",
+      "recoverable": true
+    }
+  ]
+}

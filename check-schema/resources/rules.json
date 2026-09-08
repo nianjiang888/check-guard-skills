@@ -1,0 +1,78 @@
+{
+  "version": "2.0.0",
+  "domain": "schema",
+  "layers": [
+    "required",
+    "type",
+    "format",
+    "enum",
+    "doc",
+    "safe"
+  ],
+  "rules": [
+    {
+      "id": "SCHEMA-NO-REQUIRED",
+      "layer": "required",
+      "kind": "regex",
+      "severity": "中",
+      "intent": "JSON Schema 声明了 properties 却没写 required 数组，调用方无法判断哪些字段必填",
+      "req_regex": "\"properties\"",
+      "absent_patterns": ["\"required\""],
+      "recoverable": true,
+      "rec": "补上 required 数组列出必填字段"
+    },
+    {
+      "id": "SCHEMA-NO-TYPE",
+      "layer": "type",
+      "kind": "regex",
+      "severity": "中",
+      "intent": "schema 声明了 properties 却全程没有 type 字段，字段类型完全不约束",
+      "req_regex": "\"properties\"",
+      "absent_patterns": ["\"type\""],
+      "recoverable": true,
+      "rec": "为每个字段补上 type"
+    },
+    {
+      "id": "SCHEMA-EMAIL-NO-FORMAT",
+      "layer": "format",
+      "kind": "regex",
+      "severity": "低",
+      "intent": "出现 email/mail/邮箱 这类字段却没标 format: email，校验会放行进错格式",
+      "req_regex": "(email|mail|邮箱)",
+      "absent_patterns": ["\"format\""],
+      "recoverable": true,
+      "rec": "给邮箱字段加 format: email"
+    },
+    {
+      "id": "SCHEMA-ENUM-MISSING",
+      "layer": "enum",
+      "kind": "regex",
+      "severity": "低",
+      "intent": "出现 status/state/role/type/level 这类有限值字段却没标 enum，取值无约束",
+      "req_regex": "(status|state|role|type|level)",
+      "absent_patterns": ["\"enum\""],
+      "recoverable": true,
+      "rec": "给有限值字段加 enum 枚举"
+    },
+    {
+      "id": "SCHEMA-NO-DESCRIPTION",
+      "layer": "doc",
+      "kind": "regex",
+      "severity": "低",
+      "intent": "schema 声明了 properties 却没有任何 description，消费者看不懂字段含义",
+      "req_regex": "\"properties\"",
+      "absent_patterns": ["\"description\""],
+      "recoverable": true,
+      "rec": "为字段补 description"
+    },
+    {
+      "id": "SCHEMA-CLEAN",
+      "layer": "safe",
+      "kind": "regex",
+      "severity": "低",
+      "intent": "已接入 schema 校验工具（jsonschema/pydantic/sqlalchemy/cerberus 等），鼓励",
+      "pattern": "(jsonschema|pydantic|sqlalchemy|cerberus|dataclass|marshmallow|voluptuous|avro|protobuf)",
+      "recoverable": true
+    }
+  ]
+}

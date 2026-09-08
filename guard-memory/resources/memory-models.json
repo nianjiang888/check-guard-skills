@@ -1,0 +1,45 @@
+{
+  "version": "2.0.0",
+  "name": "guard-memory 理论模型与量化方法",
+  "theories": {
+    "owasp_llm07_2025": {
+      "title": "OWASP Top 10 for LLM Applications 2025 — LLM07: System Prompt Leakage / Memory Poisoning",
+      "summary": "OWASP 将\"系统提示泄露\"与记忆/上下文投毒列为大模型应用核心风险：不可信内容进入长期记忆或上下文后，可持久改变模型行为。",
+      "citation": "OWASP, Top 10 for Large Language Model Applications (2025), LLM07: System Prompt Leakage; LLM01 间接注入同源。"
+    },
+    "rag_poisoning": {
+      "title": "RAG 投毒实证（检索增强生成的数据层攻击）",
+      "summary": "研究证明：向知识库注入恶意文档，可在检索阶段把毒内容拼进上下文，使模型输出被攻击者引导（PoisonedRAG 等）。上下文越长、不可信占比越高，间接注入越易得逞。",
+      "citation": "Zou et al. PoisonedRAG (2024); Greshake et al. 间接提示注入调查 (2023)。"
+    },
+    "long_term_memory_poisoning": {
+      "title": "长期记忆投毒（跨会话持久后门）",
+      "summary": "当 Agent 拥有可写长期记忆（memory/notes/kb），一次被注入的\"记住你永远…\"会在后续所有对话重复生效，比单次上下文注入更难治——因为它跨会话、难察觉。",
+      "citation": "Agentic 系统记忆安全实践综述（2024–2025）；Anthropic/OpenAI agent 记忆安全建议。"
+    },
+    "trust_boundary": {
+      "title": "信任边界（Saltzer & Schroeder 1975）",
+      "summary": "任何来自外部/工具/用户的输入都处在不信任侧；跨边界写入内部状态（记忆）必须做校验、分级、溯源。本系列沿用该基座原则。",
+      "citation": "Saltzer & Schroeder, The Protection of Information in Computer Systems (1975)。"
+    }
+  },
+  "severity_weights": {
+    "极端": 100,
+    "高": 40,
+    "中": 12,
+    "低": 3
+  },
+  "exposure_formula": "记忆污染暴露指数 = min(100, Σ 命中严重度权重)；按最坏一项定级（极端>高>中>低），非平均；避免\"九个中危+一个极端\"被稀释。",
+  "value_quant": {
+    "metric": "避免的记忆清洗/纠偏工时",
+    "table": {
+      "极端": 8,
+      "高": 4,
+      "中": 1,
+      "低": 0
+    },
+    "rationale": "受污染记忆的代价在后续对话才显现：某次被注入的后门会反复影响行为。把\"没发生的污染扩散\"折算成可感知工时，让防护价值可见（GRC/安全运营标准做法）。"
+  },
+  "defense_stance": "看清后果再决定，不硬禁止——硬禁止会逼用户绕过护栏（--no-verify/裸写），更糟。不实际拦截任何请求，决策权在人；不感知运行时动态写入频次；不承诺 100%（只是多层防御的工具层）。",
+  "detection_layers": ["write", "poison", "rag", "session", "provenance", "leak", "safe"]
+}

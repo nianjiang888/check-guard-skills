@@ -1,0 +1,73 @@
+{
+  "version": "2.0.0",
+  "domain": "secret-scan",
+  "layers": [
+    "private-key",
+    "known-prefix",
+    "hardcoded",
+    "url-cred",
+    "env-file",
+    "safe"
+  ],
+  "rules": [
+    {
+      "id": "SECRET-PRIVATE-KEY",
+      "layer": "private-key",
+      "kind": "regex",
+      "severity": "极端",
+      "intent": "代码/配置里出现 PEM 私钥块（-----BEGIN ... PRIVATE KEY-----），一旦提交即等同于私钥泄露",
+      "pattern": "-----BEGIN (?:RSA |EC |DSA |OPENSSH |PGP )?PRIVATE KEY-----",
+      "recoverable": true,
+      "rec": "立即从仓库移除私钥，并到对应平台轮换/吊销该密钥"
+    },
+    {
+      "id": "SECRET-KNOWN-PREFIX",
+      "layer": "known-prefix",
+      "kind": "knownprefix",
+      "dict": "secret-patterns.json",
+      "severity": "极端",
+      "intent": "命中已知前缀的明文密钥（AWS/GitHub/Slack/Google/OpenAI/GitLab/JWT 等），与私钥同属泄露级",
+      "recoverable": true,
+      "rec": "撤销并轮换该密钥，改用环境变量或密钥管理器注入"
+    },
+    {
+      "id": "SECRET-HARDCODED-CRED",
+      "layer": "hardcoded",
+      "kind": "regex",
+      "severity": "高",
+      "intent": "password/secret/token/api_key 等被硬编码为字面值，发布后易被读取",
+      "pattern": "(?i)(?:password|passwd|pwd|secret|token|api[_-]?key|access[_-]?key|private[_-]?key|client[_-]?secret)\\s*[:=]\\s*[\"'][^\"'$\\s]{4,}[\"']",
+      "recoverable": true,
+      "rec": "改为从环境变量 / 密钥管理器读取，不要在代码中写死"
+    },
+    {
+      "id": "SECRET-URL-CREDENTIAL",
+      "layer": "url-cred",
+      "kind": "regex",
+      "severity": "高",
+      "intent": "URL 内嵌 user:pass（如 协议头://user:pass@host 这类写法），凭证会明文出现在地址里",
+      "pattern": "https?:\\/\\/[^\"'>\\s]*[:=][^\"'>\\s]*@",
+      "recoverable": true,
+      "rec": "把凭证移出 URL，改用 Authorization 头或环境变量"
+    },
+    {
+      "id": "SECRET-ENV-FILE",
+      "layer": "env-file",
+      "kind": "filename",
+      "severity": "中",
+      "intent": "检测到被提交进仓库的 .env 文件，里面通常含真实凭证",
+      "pattern": "^\\.env",
+      "recoverable": true,
+      "rec": "把 .env 加入 .gitignore，改用 .env.example 提交占位，真实值走 CI 变量"
+    },
+    {
+      "id": "SECRET-CLEAN",
+      "layer": "safe",
+      "kind": "regex",
+      "severity": "低",
+      "intent": "已接入密钥扫描工具（gitleaks/trufflehog/detect-secrets/semgrep 等），鼓励",
+      "pattern": "(gitleaks|trufflehog|detect-secrets|git-secrets|shhgit|semgrep|scan-secrets)",
+      "recoverable": true
+    }
+  ]
+}

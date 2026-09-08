@@ -1,0 +1,40 @@
+{
+  "version": "2.0.0",
+  "domain": "schema",
+  "theories": [
+    {
+      "name": "缺 required/type 是 schema 最致命的软约束缺失（Missing Hard Constraints）",
+      "point": "schema 声明了 properties 却没写 required、或全程没有 type，调用方无法判断必填字段、字段类型也完全不约束，下游解析会静默接受脏数据。",
+      "use": "支撑 SCHEMA-NO-REQUIRED（有 properties 无 required，中）与 SCHEMA-NO-TYPE（有 properties 无 type，中），二者同属「结构硬约束缺失」，命中即建议修复。"
+    },
+    {
+      "name": "语义约束缺失是可被放过的软错误（Semantic Constraint Gap）",
+      "point": "email/邮箱 字段没标 format:email、status/state/role/type/level 这类有限值字段没标 enum，校验器会放行进错格式或越界取值。",
+      "use": "支撑 SCHEMA-EMAIL-NO-FORMAT（邮箱类字段缺 format，低）与 SCHEMA-ENUM-MISSING（有限值字段缺 enum，低）。"
+    },
+    {
+      "name": "文档缺失降低 schema 可读性（Missing Documentation）",
+      "point": "schema 声明了 properties 却没有任何 description，消费者看不懂字段含义，协作与代码生成都会受阻。",
+      "use": "支撑 SCHEMA-NO-DESCRIPTION（有 properties 无 description，低）。"
+    },
+    {
+      "name": "快检版 vs 深度版（与 guard-schema 的边界）",
+      "point": "check-schema 做静态快检（模式命中即报缺约束），guard-schema 做深度防护（类型推导+依赖校验+历史扫描）。入口不同、互不替代。",
+      "use": "整体方法论：把「发布前最后一次 schema 体检」变成可重跑、可留证的静态检查。"
+    },
+    {
+      "name": "为什么是静态扫描而非实时推导",
+      "point": "实时类型推导需接运行时/采样数据、慢、难进 CI。静态模式匹配在部署前就能跑、可重跑、可留证据，专门拦住「缺 required/type/format/enum/description」这类不需语义理解就能判定的约束缺失。",
+      "use": "整体方法论：check-schema 定位高频、可确定性判定的 schema 约束缺失，不做全量类型推导。"
+    }
+  ],
+  "quant_model": {
+    "dimension": "可修正性",
+    "index_name": "验证暴露指数",
+    "index_formula": "各发现严重度权重累加（极端100/高40/中12/低3），上限100",
+    "value_name": "预计避免返工工时",
+    "value_formula": "各发现严重度对应工时累加（极端8/高4/中1/低0）",
+    "severity_weights": {"极端": 100, "高": 40, "中": 12, "低": 3},
+    "avoid_hours": {"极端": 8, "高": 4, "中": 1, "低": 0}
+  }
+}

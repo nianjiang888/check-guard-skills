@@ -1,0 +1,84 @@
+{
+  "version": "2.0.0",
+  "domain": "ci",
+  "layers": [
+    "timeout",
+    "secret",
+    "permission",
+    "trigger",
+    "safe"
+  ],
+  "rules": [
+    {
+      "id": "CI-NO-TIMEOUT",
+      "layer": "timeout",
+      "kind": "regex",
+      "severity": "中",
+      "ext": [
+        ".yml",
+        ".yaml"
+      ],
+      "intent": "CI 任务未设超时，卡死的步骤会一直占用 runner、拖垮整个流水线",
+      "req_regex": "(jobs:|job:)",
+      "absent_patterns": [
+        "(timeout|TIMEOUT)"
+      ],
+      "recoverable": true,
+      "rec": "为任务加上超时（如 timeout-minutes）"
+    },
+    {
+      "id": "CI-SECRET-PLAIN",
+      "layer": "secret",
+      "kind": "regex",
+      "severity": "高",
+      "ext": [
+        ".yml",
+        ".yaml"
+      ],
+      "intent": "CI 配置里明文写了密码/令牌/密钥字面值，泄露即失陷",
+      "pattern": "(password|passwd|token|secret|api[_-]?key|access[_-]?key)\\s*[:=]\\s*[\"']?[A-Za-z0-9_\\-/+=]{10,}",
+      "recoverable": true,
+      "rec": "改用密钥管理器/加密变量引用，轮换已泄露凭据"
+    },
+    {
+      "id": "CI-PERMISSIONS-WIDE",
+      "layer": "permission",
+      "kind": "regex",
+      "severity": "中",
+      "ext": [
+        ".yml",
+        ".yaml"
+      ],
+      "intent": "CI 授予过宽权限（write-all 或 contents: write），被攻陷的步骤可篡改仓库与发布",
+      "pattern": "(permissions:[ \\t]*write-all|contents:[ \\t]*write)",
+      "recoverable": true,
+      "rec": "按最小权限收缩 scopes，仅授予必要权限"
+    },
+    {
+      "id": "CI-NO-TRIGGER",
+      "layer": "trigger",
+      "kind": "regex",
+      "severity": "高",
+      "ext": [
+        ".yml",
+        ".yaml"
+      ],
+      "intent": "工作流没有任何触发条件（on / push / pull_request / schedule），实际上永远不会运行",
+      "req_regex": "(name:|jobs:)",
+      "absent_patterns": [
+        "(^\\s*on\\s*:|workflow_dispatch|push\\s*:|pull_request\\s*:|schedule\\s*:)"
+      ],
+      "recoverable": true,
+      "rec": "补上触发条件（on: push / pull_request / schedule）"
+    },
+    {
+      "id": "CI-CLEAN",
+      "layer": "safe",
+      "kind": "regex",
+      "severity": "低",
+      "intent": "已接入 CI 校验流程（pipeline lint/ci-check/流水线校验），鼓励",
+      "pattern": "(pipeline lint|ci-check|CI 校验|流水线校验)",
+      "recoverable": true
+    }
+  ]
+}

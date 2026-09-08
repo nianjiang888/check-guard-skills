@@ -1,0 +1,360 @@
+{
+  "version": "1.0.0",
+  "meta": {
+    "domain": "中国境内工程/货物/服务类招投标",
+    "principle": "缺失类用 missing_any（任一必填项未检出即报）；危险信号类用 regex（正向命中即报）；计算类用 date/amount/pagegap",
+    "note": "规则命中不等于必然废标，仅标记需人工复核的雷区"
+  },
+  "rules": [
+    {
+      "id": "qual_business_license",
+      "layer": "qualification",
+      "severity": "高",
+      "recoverable": true,
+      "intent": "营业执照未检出",
+      "rec": "补充营业执照副本复印件并加盖公章",
+      "kind": "missing_any",
+      "terms": ["营业执照"],
+      "ext": [".md", ".txt"]
+    },
+    {
+      "id": "qual_certificate",
+      "layer": "qualification",
+      "severity": "高",
+      "recoverable": false,
+      "intent": "资质证书未检出",
+      "rec": "补充与招标要求匹配的专业资质等级证书，注意等级不得低于要求",
+      "kind": "missing_any",
+      "terms": ["资质证书", "资质等级"],
+      "ext": [".md", ".txt"]
+    },
+    {
+      "id": "qual_safety_license",
+      "layer": "qualification",
+      "severity": "高",
+      "recoverable": false,
+      "intent": "安全生产许可证未检出（工程类招标必备）",
+      "rec": "补充安全生产许可证复印件，过期或缺失直接废标",
+      "kind": "missing_any",
+      "terms": ["安全生产许可证"],
+      "ext": [".md", ".txt"]
+    },
+    {
+      "id": "qual_auth_letter",
+      "layer": "qualification",
+      "severity": "高",
+      "recoverable": true,
+      "intent": "法定代表人授权委托书未检出",
+      "rec": "非法定代表人投标必须提供授权委托书原件，且需签字盖章",
+      "kind": "missing_any",
+      "terms": ["授权委托书", "法人授权"],
+      "ext": [".md", ".txt"]
+    },
+    {
+      "id": "qual_bid_bond",
+      "layer": "qualification",
+      "severity": "高",
+      "recoverable": true,
+      "intent": "投标保证金缴纳凭证未检出",
+      "rec": "补充保证金电汇回单或保函，注意金额、到账时间、账户名一致",
+      "kind": "missing_any",
+      "terms": ["投标保证金", "保证金缴纳", "保证金凭证"],
+      "ext": [".md", ".txt"]
+    },
+    {
+      "id": "qual_financial",
+      "layer": "qualification",
+      "severity": "中",
+      "recoverable": true,
+      "intent": "财务报表或资信证明未检出",
+      "rec": "补充近三年审计报告或银行资信证明",
+      "kind": "missing_any",
+      "terms": ["财务报[表告]", "审计报告", "资信证明"],
+      "ext": [".md", ".txt"]
+    },
+    {
+      "id": "qual_performance",
+      "layer": "qualification",
+      "severity": "中",
+      "recoverable": false,
+      "intent": "类似项目业绩证明未检出",
+      "rec": "补充合同关键页或竣工验收证明，注意业绩规模是否达标",
+      "kind": "missing_any",
+      "terms": ["业绩", "类似项目", "竣工验收"],
+      "ext": [".md", ".txt"]
+    },
+    {
+      "id": "qual_pm_cert",
+      "layer": "qualification",
+      "severity": "高",
+      "recoverable": false,
+      "intent": "项目经理注册证书未检出",
+      "rec": "补充项目经理注册建造师证及安全生产考核合格证",
+      "kind": "missing_any",
+      "terms": ["注册建造师", "项目经理.*证书", "建造师注册证"],
+      "ext": [".md", ".txt"]
+    },
+    {
+      "id": "qual_social_security",
+      "layer": "qualification",
+      "severity": "中",
+      "recoverable": true,
+      "intent": "社保或纳税证明未检出",
+      "rec": "补充近三个月社保缴纳证明或纳税证明",
+      "kind": "missing_any",
+      "terms": ["社保", "纳税证明", "社会保险"],
+      "ext": [".md", ".txt"]
+    },
+    {
+      "id": "qual_no_bribe",
+      "layer": "qualification",
+      "severity": "中",
+      "recoverable": true,
+      "intent": "无行贿犯罪记录承诺或信用中国截图未检出",
+      "rec": "补充无行贿犯罪承诺书及信用中国查询结果截图",
+      "kind": "missing_any",
+      "terms": ["无行贿", "信用中国", "诚信承诺"],
+      "ext": [".md", ".txt"]
+    },
+    {
+      "id": "form_seal_missing",
+      "layer": "formality",
+      "severity": "高",
+      "recoverable": true,
+      "intent": "关键页签章缺失或未完成",
+      "rec": "逐页检查报价页、投标函、授权书是否已盖章签字，注意骑缝章",
+      "kind": "regex",
+      "pattern": "需盖章|待盖章|未盖章|未签字|待签字|漏盖章|漏签字|补盖章|此处盖章|此处签字",
+      "ext": [".md", ".txt"]
+    },
+    {
+      "id": "form_price_over_limit",
+      "layer": "formality",
+      "severity": "极端",
+      "recoverable": true,
+      "intent": "报价超出预算限价",
+      "rec": "核对招标文件最高限价，超出即废标，须重新组价",
+      "kind": "regex",
+      "pattern": "超出.{0,6}限价|高于.{0,6}限价|高出.{0,6}限价|超过.{0,6}限价|超.{0,4}最高限价|预算.{0,4}不足|超预算|报价.{0,6}超限",
+      "ext": [".md", ".txt"]
+    },
+    {
+      "id": "form_validity_short",
+      "layer": "formality",
+      "severity": "高",
+      "recoverable": true,
+      "intent": "投标有效期可能不足招标文件要求",
+      "rec": "常见要求 90 天，核对标书承诺有效期是否不低于招标要求",
+      "kind": "regex",
+      "pattern": "投标有效期\\s*[:：]?\\s*([1-9]|[1-5][0-9]|6[0-9])\\s*日|投标有效期[^0-9]{0,10}([1-9]|[1-5][0-9]|6[0-9])\\s*天",
+      "ext": [".md", ".txt"]
+    },
+    {
+      "id": "form_bid_letter",
+      "layer": "formality",
+      "severity": "高",
+      "recoverable": true,
+      "intent": "投标函或开标一览表未检出",
+      "rec": "补充投标函、开标一览表，两者金额须一致",
+      "kind": "missing_any",
+      "terms": ["投标函", "开标一览表"],
+      "ext": [".md", ".txt"]
+    },
+    {
+      "id": "form_deviation",
+      "layer": "formality",
+      "severity": "高",
+      "recoverable": false,
+      "intent": "技术方案或商务条款偏离招标要求",
+      "rec": "关键条款偏离通常直接废标，须逐条比对并书面响应，不可含糊",
+      "kind": "regex",
+      "pattern": "偏离.{0,4}要求|不符[合]{0,1}.{0,6}要求|未能响应|不响应|无法满足.{0,6}要求",
+      "ext": [".md", ".txt"]
+    },
+    {
+      "id": "form_attachment_checklist",
+      "layer": "formality",
+      "severity": "中",
+      "recoverable": true,
+      "intent": "缺少附件清单或逐项响应表",
+      "rec": "附一张附件清单，对照招标文件逐项打钩，评委也省事",
+      "kind": "missing_any",
+      "terms": ["附件清单", "响应表", "逐项响应"],
+      "ext": [".md", ".txt"]
+    },
+    {
+      "id": "cons_amount_conflict",
+      "layer": "consistency",
+      "severity": "中",
+      "recoverable": true,
+      "intent": "文档中出现多处金额表述，需人工核对大小写与合计是否一致",
+      "rec": "重点核：总价大小写、分项合计与总价、单价乘以数量",
+      "kind": "amount",
+      "min_count": 4,
+      "ext": [".md", ".txt"]
+    },
+    {
+      "id": "cons_amount_updown_mismatch",
+      "layer": "consistency",
+      "severity": "高",
+      "recoverable": true,
+      "intent": "报价金额大小写不一致（经典废标点）",
+      "rec": "以大写金额为准，修改小写使其一致",
+      "kind": "regex",
+      "pattern": "大小写.{0,6}不一致|大写.{0,8}与小写.{0,8}不[一符]|金额.{0,6}不一致",
+      "ext": [".md", ".txt"]
+    },
+    {
+      "id": "cons_date_conflict",
+      "layer": "consistency",
+      "severity": "中",
+      "recoverable": true,
+      "intent": "文档出现多个日期，需人工核对工期与进度计划逻辑",
+      "rec": "核：开工不晚于竣工、工期天数与日历一致、与进度计划表一致",
+      "kind": "date",
+      "min_count": 3,
+      "ext": [".md", ".txt"]
+    },
+    {
+      "id": "cons_deadline_reverse",
+      "layer": "consistency",
+      "severity": "高",
+      "recoverable": true,
+      "intent": "工期倒挂（开工日期晚于竣工日期）",
+      "rec": "修正工期起止日期，并同步修改进度计划与横道图",
+      "kind": "deadline",
+      "pattern": "开工日期\\s*[:：]?\\s*(\\d{4})\\s*[-年]\\s*(\\d{1,2})\\s*[-月]\\s*(\\d{1,2})[\\s\\S]{0,80}?竣工日期\\s*[:：]?\\s*(\\d{4})\\s*[-年]\\s*(\\d{1,2})\\s*[-月]\\s*(\\d{1,2})",
+      "ext": [".md", ".txt"]
+    },
+    {
+      "id": "cons_cert_expired",
+      "layer": "consistency",
+      "severity": "高",
+      "recoverable": false,
+      "intent": "证书或资质已过期",
+      "rec": "过期证书等同无效，须换成有效期覆盖投标期的版本",
+      "kind": "regex",
+      "pattern": "证书[^\\n]{0,12}已过期|资质[^\\n]{0,12}过期|有效期[^\\n]{0,12}已过|过期未换证",
+      "ext": [".md", ".txt"]
+    },
+    {
+      "id": "cons_pm_mismatch",
+      "layer": "consistency",
+      "severity": "中",
+      "recoverable": true,
+      "intent": "项目人员与证书信息可能不一致",
+      "rec": "核：人员姓名、证书编号、注册单位三者一致，且与社保单位同名",
+      "kind": "regex",
+      "pattern": "证书[^\\n]{0,20}与[^\\n]{0,10}不一致|人员[^\\n]{0,10}与证书[^\\n]{0,10}不[一符]",
+      "ext": [".md", ".txt"]
+    },
+    {
+      "id": "cons_page_gap",
+      "layer": "consistency",
+      "severity": "低",
+      "recoverable": true,
+      "intent": "页码不连续",
+      "rec": "重新编页，缺页常伴内容缺失，一并核",
+      "kind": "pagegap",
+      "ext": [".md", ".txt"]
+    },
+    {
+      "id": "cons_catalog_mismatch",
+      "layer": "consistency",
+      "severity": "低",
+      "recoverable": true,
+      "intent": "目录与正文页码不一致",
+      "rec": "定稿后重生成目录，别手工改",
+      "kind": "regex",
+      "pattern": "目录[^\\n]{0,15}与正文[^\\n]{0,10}不[一符]|目录页码[^\\n]{0,10}不[一符]",
+      "ext": [".md", ".txt"]
+    },
+    {
+      "id": "format_font_margin",
+      "layer": "format",
+      "severity": "中",
+      "recoverable": true,
+      "intent": "格式与招标文件要求不符（字体、字号、页边距、行距）",
+      "rec": "按招标文件逐项套模板，常见要求：正文仿宋 GB2312 三号、行距 28 磅",
+      "kind": "regex",
+      "pattern": "字体[^\\n]{0,10}不符|字号[^\\n]{0,10}不符|页边距[^\\n]{0,10}不符|行距[^\\n]{0,10}不符|未按.{0,6}格式",
+      "ext": [".md", ".txt"]
+    },
+    {
+      "id": "format_placeholder_left",
+      "layer": "format",
+      "severity": "中",
+      "recoverable": true,
+      "intent": "残留占位符未替换（低级但致命）",
+      "rec": "全文搜索 XXX、待填、某某、TODO，逐个替换干净",
+      "kind": "regex",
+      "pattern": "XXX|待填[写充]|某某公司|TODO|\\[请填写\\]|\\[待补充\\]",
+      "ext": [".md", ".txt"]
+    },
+    {
+      "id": "format_company_name_wrong",
+      "layer": "format",
+      "severity": "高",
+      "recoverable": true,
+      "intent": "公司名称或项目名称与招标文件不一致",
+      "rec": "名称错一个字都可能被判非响应，须与营业执照一字不差",
+      "kind": "regex",
+      "pattern": "公司名[称字号][^\\n]{0,15}不[一符]|项目名称[^\\n]{0,15}不[一符]|投标人名称[^\\n]{0,10}错误",
+      "ext": [".md", ".txt"]
+    },
+    {
+      "id": "format_copy_mark",
+      "layer": "format",
+      "severity": "低",
+      "recoverable": true,
+      "intent": "正副本标识或密封要求未说明",
+      "rec": "按招标文件标注正本/副本份数，密封条加盖骑缝章",
+      "kind": "missing_any",
+      "terms": ["正本", "副本"],
+      "ext": [".md", ".txt"]
+    },
+    {
+      "id": "format_contact_incomplete",
+      "layer": "format",
+      "severity": "低",
+      "recoverable": true,
+      "intent": "联系方式不完整",
+      "rec": "补联系人、手机、邮箱、地址，开标当天联系不上是要命的",
+      "kind": "regex",
+      "pattern": "联系人[^\\n]{0,20}(未填|缺失|不详)|联系电话[^\\n]{0,10}(未填|缺失|不详)|联系方式[^\\n]{0,10}不完整",
+      "ext": [".md", ".txt"]
+    },
+    {
+      "id": "tech_plan_missing",
+      "layer": "technical",
+      "severity": "中",
+      "recoverable": true,
+      "intent": "施工组织设计或技术方案核心章节缺失",
+      "rec": "核招标要求的必写章节：施工方案、进度计划、质量、安全、环保",
+      "kind": "missing_any",
+      "terms": ["施工方案", "进度计划", "质量保证", "安全措施"],
+      "ext": [".md", ".txt"]
+    },
+    {
+      "id": "tech_no_response_point",
+      "layer": "technical",
+      "severity": "中",
+      "recoverable": true,
+      "intent": "技术参数未逐条响应",
+      "rec": "参数表逐条写「满足」或「优于」，留空即被视为不响应",
+      "kind": "regex",
+      "pattern": "参数[^\\n]{0,15}未响应|技术参数[^\\n]{0,10}留空|未逐条响应",
+      "ext": [".md", ".txt"]
+    },
+    {
+      "id": "safe_selfcheck_signal",
+      "layer": "safe",
+      "severity": "低",
+      "recoverable": true,
+      "intent": "已接入废标自查基线（鼓励信号，仅正向标记）",
+      "rec": "保持每次投前自查的习惯",
+      "kind": "regex",
+      "pattern": "废标自查|废标风险|投前检查"
+    }
+  ]
+}

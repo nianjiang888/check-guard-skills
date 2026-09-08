@@ -1,0 +1,40 @@
+{
+  "version": "2.0.0",
+  "domain": "links",
+  "theories": [
+    {
+      "name": "断链是文档与构建的头号隐性缺陷（Broken Link / Dangling Reference）",
+      "point": "指向不存在文件、失效锚点、占位域名的引用，在发布前毫无声息，发布后读者点击即 404，或构建流水线直接失败。",
+      "use": "支撑 LINK-IMPORT-MISSING（构建级缺失，极端）与 LINK-FILE-MISSING（资源级缺失，高）两条规则。"
+    },
+    {
+      "name": "可解析性（Resolvability）原则",
+      "point": "任何引用在加载时都应能被解析到真实目标；无法解析的引用应在构建期暴露，而非发布后失效。",
+      "use": "支撑 LINK-ANCHOR-MISSING（页内锚点失效）、LINK-ESCAPE-ROOT（路径越界）、LINK-TRAILING-SPACE（目标含空白无法解析）。"
+    },
+    {
+      "name": "链接卫生（Link Hygiene / 零占位）",
+      "point": "对外发布的文档不应包含示例/占位地址（example.com、localhost），也不应有空链接或语法非法链接——它们对读者全部等于死链。",
+      "use": "支撑 LINK-PLACEHOLDER（占位域名）、LINK-EMPTY（空链接）、LINK-MALFORMED（语法非法）。"
+    },
+    {
+      "name": "锚点唯一性（Unique Anchor Slug）",
+      "point": "同一文档内多个相同标题会生成相同锚点，跳转必然歧义；静态检查应提前发现重复。",
+      "use": "支撑 LINK-DUP-ANCHOR（重复锚点）规则。"
+    },
+    {
+      "name": "为什么是静态检查而非实时探活",
+      "point": "实时 HTTP 探活慢、受网络/墙影响、不可重跑、难进 CI。静态检查在部署前就能跑、可重跑、可留证据，专门拦住「文件/锚点/语法」这类不需联网就能判定的死链。",
+      "use": "整体方法论：check-links 把「发布前最后一次引用复核」变成可重跑、可留证的静态检查。"
+    }
+  ],
+  "quant_model": {
+    "dimension": "可修正性",
+    "index_name": "验证暴露指数",
+    "index_formula": "各发现严重度权重累加（极端100/高40/中12/低3），上限100",
+    "value_name": "预计避免返工工时",
+    "value_formula": "各发现严重度对应工时累加（极端8/高4/中1/低0）",
+    "severity_weights": {"极端": 100, "高": 40, "中": 12, "低": 3},
+    "avoid_hours": {"极端": 8, "高": 4, "中": 1, "低": 0}
+  }
+}

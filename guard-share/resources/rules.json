@@ -1,0 +1,144 @@
+{
+  "version": "2.0.0",
+  "name": "guard-share 外发文件泄露检查（DLP）规则库",
+  "allowlist": {
+    "paths": []
+  },
+  "rules": [
+    {
+      "id": "SHARE-PII-ID",
+      "name": "18 位身份证号字面（强 PII）",
+      "layer": "pii",
+      "category": "PII 外泄",
+      "severity": "高",
+      "intent": "独立的 18 位（末位可为 X）数字高度疑似身份证号，属最强个人标识，外发即等于把一个人完整身份交给对方",
+      "recoverable": false,
+      "note": "建议：外发前脱敏（如 110***********1234）；非必要不出完整号，改用授权后的令牌",
+      "pattern": "\\b\\d{17}[\\dxX]\\b"
+    },
+    {
+      "id": "SHARE-PII-PHONE",
+      "name": "11 位手机号字面（强 PII）",
+      "layer": "pii",
+      "category": "PII 外泄",
+      "severity": "高",
+      "intent": "1[3-9] 开头的 11 位数字是标准手机号格式，可直连到具体人，外发被用于骚扰/诈骗/社工",
+      "recoverable": false,
+      "note": "建议：外发前脱敏（如 138****8000）；名单类文件做假名化或哈希",
+      "pattern": "\\b1[3-9]\\d{9}\\b"
+    },
+    {
+      "id": "SHARE-PII-EMAIL",
+      "name": "邮箱字面（PII）",
+      "layer": "pii",
+      "category": "PII 外泄",
+      "severity": "中",
+      "intent": "邮箱是可用于身份关联与钓鱼的 PII，整批外发等于交出用户联络库",
+      "recoverable": false,
+      "note": "建议：展示脱敏（如 a***@example.com）；批量外发需经授权与最小化",
+      "pattern": "\\b[\\w.+-]+@[\\w-]+\\.[\\w.-]+\\b"
+    },
+    {
+      "id": "SHARE-SECRET-APIKEY",
+      "name": "密钥/令牌明文赋值",
+      "layer": "secret",
+      "category": "密钥外泄",
+      "severity": "极端",
+      "intent": "api_key/secret/token/password 等被直接写成明文值，一旦随文件外发，拿到文件的人即可冒用你的身份与配额",
+      "recoverable": false,
+      "note": "建议：密钥入密钥库/环境变量，文件里只留占位；已泄露立即轮换",
+      "pattern": "(?:api_key|apikey|secret_key|secret|access_token|token|password|passwd|pwd)\\s*[=:]\\s*[\"'][^\\s\"'{}]{6,}[\"']"
+    },
+    {
+      "id": "SHARE-SECRET-PRIVKEY",
+      "name": "私钥块（PEM）",
+      "layer": "secret",
+      "category": "密钥外泄",
+      "severity": "极端",
+      "intent": "-----BEGIN ... PRIVATE KEY----- 是私钥实体，外发等于把加密身份完整交出，危害等同泄露整把锁的钥匙",
+      "recoverable": false,
+      "note": "建议：私钥绝不进任何会被外发的文件；已外发立即作废并重签",
+      "pattern": "-----BEGIN[^\\n]*PRIVATE KEY-----"
+    },
+    {
+      "id": "SHARE-SECRET-CRED",
+      "name": "账号+密码配对明文",
+      "layer": "secret",
+      "category": "密钥外泄",
+      "severity": "高",
+      "intent": "username/账号 与 password/密码 在相邻位置成对出现，是最直接的凭据外泄形态",
+      "recoverable": false,
+      "note": "建议：凭据拆开存储、走单点登录；外发文件里只允许其一或全用占位",
+      "pattern": "(?:username|user|账号|user_name|login)\\b[\\s\\S]{0,40}?(?:password|passwd|pwd|密码)"
+    },
+    {
+      "id": "SHARE-SENSITIVE-PRICE",
+      "name": "报价/合同/成本金额",
+      "layer": "sensitive",
+      "category": "商业敏感",
+      "severity": "高",
+      "intent": "报价、底价、合同金额、成本、毛利率等是谈判底牌，外发给客户或对手会直接吃掉利润空间",
+      "recoverable": false,
+      "note": "建议：外发版只给区间或脱敏金额；底价/成本严格限内部可见",
+      "pattern": "(?:报价|合同金额|底价|定价|投标价|成本价|毛利率|中标价)\\s*[=:：]?\\s*[¥￥]?\\d"
+    },
+    {
+      "id": "SHARE-SENSITIVE-ROADMAP",
+      "name": "未发布路线图/战略",
+      "layer": "sensitive",
+      "category": "商业敏感",
+      "severity": "中",
+      "intent": "路线图、roadmap、未发布规划、上市计划属于竞争情报，外泄会暴露节奏与方向",
+      "recoverable": false,
+      "note": "建议：对外版本只讲已发布内容；未发布规划加「内部·保密」标签并限范围",
+      "pattern": "(?:路线图|roadmap|未发布|上市计划|新品计划|战略方向)"
+    },
+    {
+      "id": "SHARE-INTERNAL-DOC",
+      "name": "内部架构/员工/薪酬信息",
+      "layer": "internal",
+      "category": "内部文档",
+      "severity": "中",
+      "intent": "内网地址、组织架构、员工名单、薪酬、通讯录等是内部运行信息，外发等于把公司家底摊开",
+      "recoverable": false,
+      "note": "建议：内部文档统一标「内部」并限可见范围；对外只给必要最小信息",
+      "pattern": "(?:内网地址|内网|组织架构|员工名单|薪酬|薪资|工资条|通讯录|工位表|OA 地址|VPN 地址)"
+    },
+    {
+      "id": "SHARE-CLASSIFY-MISSING",
+      "name": "含敏感内容但无密级标签",
+      "layer": "classify",
+      "category": "分类缺失",
+      "severity": "中",
+      "intent": "文件出现 PII/密钥/报价/内部等敏感内容，却通篇找不到任何密级标签（机密/秘密/内部/公开），说明它是一份「没定密」就准备外发的文件",
+      "recoverable": false,
+      "note": "建议：外发前先定密级、写清公开范围，再决定要不要发、发给谁",
+      "req_regex": "(?:身份证|手机号|银行卡|信用卡|报价|合同金额|底价|定价|密钥|api_key|token|password|内网|员工|薪酬|路线图|roadmap|机密|薪资|通讯录)",
+      "absent_patterns": ["密级", "机密", "秘密", "内部", "公开", "confidential", "classified", "internal", "restricted", "公开范围"]
+    },
+    {
+      "id": "SHARE-WATERMARK-MISSING",
+      "name": "含敏感内容但无溯源标记",
+      "layer": "watermark",
+      "category": "溯源/蜜标",
+      "severity": "中",
+      "intent": "文件出现敏感内容，却找不到任何溯源标记（水印/蜜标/分类标签/溯源码），一旦外发泄露，事后无法追到是哪个副本、经谁流出",
+      "recoverable": false,
+      "note": "建议：外发敏感文件加水印或埋蜜标（canary），留存副本报备，泄露可溯源追责",
+      "req_regex": "(?:身份证|手机号|银行卡|信用卡|报价|合同金额|底价|定价|密钥|api_key|token|password|内网|员工|薪酬|路线图|roadmap|机密|薪资|通讯录)",
+      "absent_patterns": ["溯源", "水印", "watermark", "canary", "分类标签", "蜜标", "溯源码", "标密", "追踪码"]
+    },
+    {
+      "id": "SHARE-SAFE",
+      "name": "已标密级 + 溯源标记（安全变体）",
+      "layer": "safe",
+      "category": "安全变体",
+      "severity": "低",
+      "intent": "密级/机密/秘密/内部/公开/confidential/classified 与 溯源/水印/watermark/canary 是对外发内容的正确处置，是好做法，不当命中",
+      "recoverable": true,
+      "note": "鼓励信号",
+      "pattern": "(?:密级|机密|秘密|内部|公开|confidential|classified|restricted|溯源|水印|watermark|canary|分类标签|蜜标|标密|追踪码)",
+      "safe_signal": true
+    }
+  ]
+}

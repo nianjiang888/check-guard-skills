@@ -1,0 +1,53 @@
+{
+  "version": "2.0.0",
+  "name": "guard-publish 理论根基与量化模型",
+  "theory": {
+    "checklist_manifesto": {
+      "name": "清单宣言（The Checklist Manifesto，Gawande 2009）",
+      "summary": "在高度复杂的流程里，专家也会因为「以为自己记得」而漏掉关键步骤；一张写下来的清单能显著降低疏漏率。本工具把发布前必须确认的合规项固化成可自动执行的清单，正是这一思路的落地。",
+      "source": "详见 Gawande《清单宣言》及医疗/航空业清单实践研究"
+    },
+    "release_engineering": {
+      "name": "发布工程（Release Engineering，Google SRE 第 8 章）",
+      "summary": "发布工程的核心哲学是「可重复、可审计、自动化」，把人的临场判断从事后救火前移到发布前的自动检查。本工具定位在发布前静态门禁环节，与 CI 流水线互补。",
+      "source": "详见 Google《Site Reliability Engineering》第 8 章"
+    },
+    "compliance_as_code": {
+      "name": "合规即代码（Compliance as Code / Policy as Code）",
+      "summary": "把合规要求写成机器可检查、可重跑的规则，而不是散落在人脑里的注意事项。本工具的全部规则即一套可执行的发布合规清单，改规则即改标准。",
+      "source": "详见合规即代码与策略即代码的行业实践"
+    },
+    "advertising_law": {
+      "name": "绝对化用语禁令（广告法相关条款）",
+      "summary": "广告不得使用「国家级、最高级、最佳」等绝对化用语。本工具 PUB-SUPERLATIVE 检测这类极限词。",
+      "source": "详见《中华人民共和国广告法》关于绝对化用语的规定"
+    },
+    "medical_financial_claims": {
+      "name": "疗效承诺与保本保收益禁令",
+      "summary": "医疗广告不得含有表示功效、安全性的断言或保证；金融与集资类内容不得承诺保本保收益。本工具 PUB-MEDICAL-CLAIM / PUB-INVEST-CLAIM 检测这两类最严重的违规承诺。",
+      "source": "详见医疗广告管理办法与防范和处置非法集资相关规定"
+    },
+    "pipl": {
+      "name": "个人信息保护法（PIPL）",
+      "summary": "处理个人信息应遵循合法、正当、必要原则，履行告知同意义务。本工具 PUB-PII-RAW / PUB-NO-PRIVACY-POLICY 对应「未脱敏即公开」与「无告知同意」两类典型违规。",
+      "source": "详见《中华人民共和国个人信息保护法》"
+    }
+  },
+  "quant_model": {
+    "dimension": "可整改性",
+    "release_index": {
+      "name": "发布合规指数",
+      "range": "0-100",
+      "method": "命中严重度权重累加后封顶 100；判定取严重度优先级链（极端>高>中>低），不取平均",
+      "severity_weight": {"极端": 100, "高": 40, "中": 12, "低": 3}
+    },
+    "verdict_chain": "极端 > 高 > 中 > 低（取最高，非平均）",
+    "remediable_dimension": "发布前补得上/删得掉的（极限词、疗效与收益承诺、缺免责声明、缺隐私政策、缺版本号、调试残留）标 可整改；一旦发布即不可逆、只能轮换或已扩散收回不了的（未脱敏个人信息、明文密钥、内网地址暴露）标 不可整改。",
+    "value_quant": {
+      "name": "安全控制价值量化",
+      "avoided_fix_hours": {"极端": 8, "高": 4, "中": 1, "低": 0},
+      "meaning": "拦下后估算避免的「发布后整改与召回」工时（非精确，经验值）"
+    }
+  },
+  "honest_note": "仅静态检测待发布内容是否含违规表述与合规缺口，不实际拦发布、不替代法务合规审查；结论取决于内容是否真对外发布，本工具只量化静态可见风险。"
+}

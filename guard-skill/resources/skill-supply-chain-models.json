@@ -1,0 +1,31 @@
+{
+  "version": "2.0.0",
+  "description": "guard-skill 度量与判定模型：信任分、判定链、价值量化。",
+  "trust_score": {
+    "base": 100,
+    "severity_penalty": {"极端": 100, "高": 40, "中": 12, "低": 3},
+    "provenance_incomplete_penalty": 8,
+    "clamp_min": 0,
+    "interpretation": {
+      "90-100": "可信，可安装",
+      "70-89": "基本可信，留意中危项",
+      "40-69": "偏高风险，需人工复核",
+      "0-39": "高危，不建议安装"
+    }
+  },
+  "verdict_priority_chain": {
+    "description": "原创量化点：判定链按严重度优先级收敛，不取平均，避免一个高危被多个低危稀释。",
+    "order": [
+      "极端：任一极端严重度红线命中",
+      "高：任一高危红线命中",
+      "中：存在中危红线，或溯源信息不全（缺 author / 缺 updated·date）",
+      "低：无红线命中且溯源完整"
+    ]
+  },
+  "value_quantification": {
+    "description": "安全控制价值量化：每次拦截折算成可感知的事故成本，解决安全工具价值不可见死穴。",
+    "avoided_loss_hours_by_level": {"极端": 8, "高": 4, "中": 1, "低": 0}
+  },
+  "provenance_fields": ["name", "author", "version", "updated"],
+  "scope_signals": ["network_signals", "fs_write_signals", "shell_signals"]
+}

@@ -1,0 +1,201 @@
+{
+  "version": "2.0.0",
+  "name": "guard-delete 破坏性操作规则库",
+  "description": "覆盖七层破坏性操作的静态检测规则。设计立场：看清后果再决定，而非硬禁止（硬禁止会逼出 --no-verify 绕过，更糟）。",
+  "allowlist": {
+    "paths": ["node_modules", ".git", "__pycache__", "dist", "build"],
+    "patterns": [],
+    "_comment": "上下文白名单由引擎全局常量 ALLOW_KEYWORDS 控制（示例/教学/虚构语境放行），此处 patterns 仅作结构占位，不生效。"
+  },
+  "rules": [
+    {
+      "id": "FORK-01",
+      "layer": "dos",
+      "name": "fork 炸弹",
+      "category": "拒绝服务",
+      "pattern": ":\\(\\)\\s*\\{\\s*:\\s*\\|\\s*:\\s*&\\s*\\}",
+      "severity": "高",
+      "intent": "递归无限派生进程，拖垮整机",
+      "recoverable": false
+    },
+    {
+      "id": "DELETE-01",
+      "layer": "delete",
+      "name": "rm -rf 根目录",
+      "category": "全量删除",
+      "pattern": "rm\\s+-[a-z]*rf[a-z]*\\s+/",
+      "severity": "极端",
+      "intent": "删除根文件系统，不可逆、灾难级",
+      "recoverable": false
+    },
+    {
+      "id": "DELETE-02",
+      "layer": "delete",
+      "name": "rm -rf 用户主目录",
+      "category": "全量删除",
+      "pattern": "rm\\s+-[a-z]*rf[a-z]*\\s+~",
+      "severity": "高",
+      "intent": "清空当前用户全部资料",
+      "recoverable": false
+    },
+    {
+      "id": "DELETE-03",
+      "layer": "delete",
+      "name": "rm -rf 当前/相对目录",
+      "category": "全量删除",
+      "pattern": "rm\\s+-[a-z]*rf[a-z]*\\s+\\.\\S*",
+      "severity": "高",
+      "intent": "删除当前工作目录树",
+      "recoverable": false
+    },
+    {
+      "id": "DELETE-05",
+      "layer": "delete",
+      "name": "rm -rf 指定路径",
+      "category": "目录删除",
+      "pattern": "rm\\s+-[a-z]*rf[a-z]*\\s+[A-Za-z0-9_][\\w./-]*",
+      "severity": "高",
+      "intent": "强制递归删除目录",
+      "recoverable": "unknown"
+    },
+    {
+      "id": "DB-01",
+      "layer": "db",
+      "name": "DROP TABLE",
+      "category": "库表销毁",
+      "pattern": "drop\\s+table\\s+",
+      "severity": "高",
+      "intent": "销毁整张表",
+      "recoverable": false,
+      "check_where": true,
+      "downgrade_with_where": "中"
+    },
+    {
+      "id": "DB-02",
+      "layer": "db",
+      "name": "TRUNCATE TABLE",
+      "category": "库表清空",
+      "pattern": "truncate\\s+table\\s+",
+      "severity": "高",
+      "intent": "清空全表数据",
+      "recoverable": false,
+      "check_where": true,
+      "downgrade_with_where": "中"
+    },
+    {
+      "id": "DB-03",
+      "layer": "db",
+      "name": "DELETE FROM",
+      "category": "数据删除",
+      "pattern": "delete\\s+from\\s+",
+      "severity": "高",
+      "intent": "删除行数据",
+      "recoverable": "unknown",
+      "check_where": true,
+      "downgrade_with_where": "中"
+    },
+    {
+      "id": "VCS-01",
+      "layer": "vcs",
+      "name": "git push --force",
+      "category": "历史改写",
+      "pattern": "git\\s+push\\s+(?:--force|-f)\\b",
+      "severity": "高",
+      "intent": "强制改写远端历史，可能覆盖他人提交",
+      "recoverable": true
+    },
+    {
+      "id": "VCS-02",
+      "layer": "vcs",
+      "name": "git clean -fdx",
+      "category": "未跟踪删除",
+      "pattern": "git\\s+clean\\s+-[a-z]*[fd]\\b",
+      "severity": "中",
+      "intent": "删除所有未跟踪文件/目录",
+      "recoverable": false
+    },
+    {
+      "id": "VCS-03",
+      "layer": "vcs",
+      "name": "git reset --hard",
+      "category": "工作区重置",
+      "pattern": "git\\s+reset\\s+--hard\\b",
+      "severity": "中",
+      "intent": "丢弃工作区与暂存区改动",
+      "recoverable": true
+    },
+    {
+      "id": "FILE-01",
+      "layer": "file",
+      "name": "mv 到 /dev/null",
+      "category": "数据丢弃",
+      "pattern": "mv\\s+[^\\n]*\\s+/dev/null",
+      "severity": "中",
+      "intent": "将文件直接丢弃到空设备",
+      "recoverable": false
+    },
+    {
+      "id": "FILE-02",
+      "layer": "file",
+      "name": "rmdir /s",
+      "category": "目录删除",
+      "pattern": "rmdir\\s+/[sS]\\b",
+      "severity": "中",
+      "intent": "递归删除目录（Windows）",
+      "recoverable": false
+    },
+    {
+      "id": "PERM-01",
+      "layer": "perm",
+      "name": "chmod 000",
+      "category": "权限置空",
+      "pattern": "chmod\\s+(?:-\\w+\\s+)?000\\s+",
+      "severity": "高",
+      "intent": "将文件/目录权限置为空，任何人不可访问",
+      "recoverable": false
+    },
+    {
+      "id": "PERM-02",
+      "layer": "perm",
+      "name": "chmod 777",
+      "category": "权限全开",
+      "pattern": "chmod\\s+(?:-\\w+\\s+)?777\\s+",
+      "severity": "中",
+      "intent": "将文件/目录设为全局可写，留下提权隐患",
+      "recoverable": true
+    },
+    {
+      "id": "SAFE-01",
+      "layer": "safe",
+      "name": "git stash（安全备份）",
+      "category": "安全变体",
+      "pattern": "git\\s+stash\\b",
+      "severity": "低",
+      "intent": "先暂存再操作，属于安全实践",
+      "recoverable": true,
+      "safe_signal": true
+    },
+    {
+      "id": "SAFE-02",
+      "layer": "safe",
+      "name": "mv 到回收站目录（安全替代）",
+      "category": "安全变体",
+      "pattern": "mv\\s+[^\\n]*\\s+(?:~|trash|\\.trash|回收站)",
+      "severity": "低",
+      "intent": "用移动进回收站替代硬删除，可恢复",
+      "recoverable": true,
+      "safe_signal": true
+    },
+    {
+      "id": "SAFE-03",
+      "layer": "safe",
+      "name": "cp 先备份（安全实践）",
+      "category": "安全变体",
+      "pattern": "cp\\s+-[a-z]*[rp]\\b",
+      "severity": "低",
+      "intent": "操作前先复制备份，属于安全实践",
+      "recoverable": true,
+      "safe_signal": true
+    }
+  ]
+}

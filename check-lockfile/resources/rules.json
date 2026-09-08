@@ -1,0 +1,65 @@
+{
+  "version": "2.0.0",
+  "domain": "lockfile",
+  "layers": [
+    "floating",
+    "integrity",
+    "source",
+    "unresolved",
+    "safe"
+  ],
+  "rules": [
+    {
+      "id": "LOCK-FLOATING",
+      "layer": "floating",
+      "kind": "regex",
+      "severity": "中",
+      "intent": "锁文件仍含浮动版本（^ ~ >= * x），说明并未真正锁定，依赖可能随源漂移",
+      "pattern": "(\"version\":\\s*\"[\\^~*x>=<]|version\\s*[:=]\\s*[\\^~*x>=<])",
+      "recoverable": true,
+      "rec": "用精确版本替换浮动范围，真正锁定依赖"
+    },
+    {
+      "id": "LOCK-NO-INTEGRITY",
+      "layer": "integrity",
+      "kind": "regex",
+      "severity": "中",
+      "intent": "锁文件含依赖条目却无完整性哈希（integrity/sha/--hash），无法校验被篡改",
+      "req_regex": "(resolved|url|name|version)",
+      "absent_patterns": [
+        "(integrity|sha512|sha256|sha1|--hash|hash-)"
+      ],
+      "recoverable": true,
+      "rec": "为依赖条目补上完整性哈希"
+    },
+    {
+      "id": "LOCK-HTTP-SOURCE",
+      "layer": "source",
+      "kind": "regex",
+      "severity": "高",
+      "intent": "锁文件从明文 http 源拉取依赖，传输可被中间人篡改注入恶意包",
+      "pattern": "http:(?=//)",
+      "recoverable": true,
+      "rec": "改用 https 源或自建可信镜像"
+    },
+    {
+      "id": "LOCK-UNRESOLVED",
+      "layer": "unresolved",
+      "kind": "regex",
+      "severity": "中",
+      "intent": "锁文件含 unresolved/extraneous/missing 等未解析标记，依赖树不完整",
+      "pattern": "(unresolved|extraneous|missing dependency|not installed)",
+      "recoverable": true,
+      "rec": "重新解析并锁定依赖，移除悬空条目"
+    },
+    {
+      "id": "LOCK-CLEAN",
+      "layer": "safe",
+      "kind": "regex",
+      "severity": "低",
+      "intent": "已启用依赖锁定与完整性校验（lockfile/依赖锁/完整性校验），鼓励",
+      "pattern": "(lockfile|依赖锁|完整性校验|dependency lock)",
+      "recoverable": true
+    }
+  ]
+}

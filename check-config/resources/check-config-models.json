@@ -1,0 +1,40 @@
+{
+  "version": "2.0.0",
+  "domain": "config",
+  "theories": [
+    {
+      "name": "十二要素应用（12-Factor App, 2011）",
+      "point": "配置（config）必须与代码严格分离，存储在环境变量中而非配置文件。代码库可开源，配置不可。",
+      "use": "支撑 CFG-SECRET-PLAINTEXT（明文密钥）与 CFG-MISSING-REQUIRED（鉴权字段应来自环境变量）两条规则。"
+    },
+    {
+      "name": "Schema 校验（JSON Schema / 配置模式）",
+      "point": "配置在加载时应经过结构化校验（类型、必填、枚举、范围），错误在启动期就暴露，而非运行期崩溃。",
+      "use": "支撑 CFG-PORT-OOR（范围）、CFG-INVALID-LOGLEVEL（枚举）、CFG-MISSING-REQUIRED（必填）的类型化检查思路。"
+    },
+    {
+      "name": "防御性配置（Defensive Config）",
+      "point": "默认值要安全、失败要显式、外部依赖要可观测。一个配置项的误填不应静默导致整系统不可用。",
+      "use": "整体方法论：check-config 把「部署前的最后一次人工复核」变成可重跑、可留证的静态检查。"
+    },
+    {
+      "name": "密钥管理（Secrets Management）",
+      "point": "密钥不应出现在源码、配置文件或镜像层；应通过环境变量、密钥管理服务或运行时注入，且泄露后必须轮换。",
+      "use": "支撑 CFG-SECRET-PLAINTEXT 标为「不可修正」——写进文件的密钥即使删掉也视为已暴露，必须轮换。"
+    },
+    {
+      "name": "环境一致性（Environment Parity）",
+      "point": "开发、测试、生产环境应尽量一致；生产环境不得开启调试、不得混用开发配置。",
+      "use": "支撑 CFG-ENV-MISMATCH（生产开 debug）规则的判定。"
+    }
+  ],
+  "quant_model": {
+    "dimension": "可修正性",
+    "index_name": "验证暴露指数",
+    "index_formula": "各发现严重度权重累加（极端100/高40/中12/低3），上限100",
+    "value_name": "预计避免返工工时",
+    "value_formula": "各发现严重度对应工时累加（极端8/高4/中1/低0）",
+    "severity_weights": {"极端": 100, "高": 40, "中": 12, "低": 3},
+    "avoid_hours": {"极端": 8, "高": 4, "中": 1, "低": 0}
+  }
+}

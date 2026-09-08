@@ -1,0 +1,45 @@
+{
+  "version": "2.0.1",
+  "domain": "api",
+  "theories": [
+    {
+      "name": "响应结构是契约的第一承诺（Response Schema）",
+      "point": "接口一旦声明 get/post 等操作，调用方就依赖 responses 知道返回什么；漏写 responses 等于把返回结构丢给猜测，极易引发解析错误。",
+      "use": "支撑 API-NO-RESPONSE-SCHEMA（漏写 responses，中），要求每个操作都有 responses 定义。"
+    },
+    {
+      "name": "只有 200 的接口是不诚实的契约（Error Response）",
+      "point": "真实系统必然出错；responses 里只有 200 而缺 4xx/5xx，客户端无法对异常分支做处理，生产环境会静默崩。",
+      "use": "支撑 API-NO-ERROR-RESPONSE（缺 4xx/5xx 错误响应，中）。"
+    },
+    {
+      "name": "GET 带 body 是语义错误（Verb Semantics）",
+      "point": "GET 语义不应携带请求体；出现 requestBody 通常是本该用 POST 却误用 GET，缓存、代理、网关都会误解。",
+      "use": "支撑 API-GET-WITH-BODY（GET 带 requestBody，高），提示改动词或去 body。"
+    },
+    {
+      "name": "无鉴权的接口在裸奔（Auth Declaration）",
+      "point": "定义了 paths 却全程没有 security/authorization/apiKey 等鉴权声明，等于对外公开，越权与爬取风险极高。",
+      "use": "支撑 API-NO-AUTH（缺鉴权声明，中）。"
+    },
+    {
+      "name": "缺 description 的接口没人敢用（Documentation）",
+      "point": "consumer 看不懂无 description 的接口用途与参数，复用成本陡增；description 是契约可读性的底线。",
+      "use": "支撑 API-NO-DESCRIPTION（缺 description，低）。"
+    },
+    {
+      "name": "规范工具是正向信号（Contract Tooling）",
+      "point": "已接入 openapi/swagger/pydantic/fastapi 等规范工具，说明团队重视契约治理，应鼓励而非扣分。",
+      "use": "支撑 API-CLEAN（safe 层，仅鼓励信号，不计入发现项）。"
+    }
+  ],
+  "quant_model": {
+    "dimension": "可修正性",
+    "index_name": "验证暴露指数",
+    "index_formula": "各发现严重度权重累加（极端100/高40/中12/低3），上限100",
+    "value_name": "预计避免返工工时",
+    "value_formula": "各发现严重度对应工时累加（极端8/高4/中1/低0）",
+    "severity_weights": {"极端": 100, "高": 40, "中": 12, "低": 3},
+    "avoid_hours": {"极端": 8, "高": 4, "中": 1, "低": 0}
+  }
+}

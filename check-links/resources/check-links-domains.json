@@ -1,0 +1,27 @@
+{
+  "version": "2.0.0",
+  "domain": "links",
+  "report_fields": {
+    "verdict": "判定（通过/低/中/高/极端）",
+    "exposure_index": "验证暴露指数 0-100",
+    "fixable": "可修正发现数",
+    "unfixable": "不可修正发现数",
+    "findings": "发现总数",
+    "avoid_rework_hours": "预计避免返工工时"
+  },
+  "exit_codes": {
+    "0": "干净，无发现",
+    "1": "有发现（建议修复）",
+    "2": "IO 或运行错误",
+    "3": "未知命令",
+    "4": "发现极端级问题（建议阻断发布，等同已拦下）"
+  },
+  "honest_boundaries": [
+    "仅静态检测，不修改文件、不拦截部署、不实际发起网络请求探活",
+    "判定基于文件可见内容，不承诺 100% 准确",
+    "误报会杀死产品，故用白名单 + 文件存在性判定压制误报",
+    "价值量化（避免返工工时）为估算，真实以故障记录为准",
+    "与 guard-network / guard-publish 互补：check 做死链快检版，guard 做安全/合规深度版"
+  ],
+  "white_list_note": "仅跳过文件名含 test_/example/sample 或内容含 fixture/测试专用示例 等明确测试标记的文件；真实文档即使含 example 等词也不会被跳过，以免漏报真实死链。"
+}

@@ -1,0 +1,49 @@
+{
+  "version": "2.0.0",
+  "name": "guard-network 理论根基与量化模型",
+  "theories": [
+    {
+      "id": "mitre-t1041",
+      "name": "MITRE ATT&CK T1041 Exfiltration Over C2 Channel",
+      "summary": "攻击者复用已建立的 C2 通道外泄数据，使流量混入正常回连难以区分；检测重点在回连频率、目标与内容熵。",
+      "source": "MITRE ATT&CK, T1041（详见 MITRE ATT&CK 官方技术页，检索于 2026）"
+    },
+    {
+      "id": "mitre-t1048",
+      "name": "MITRE ATT&CK T1048 Exfiltration Over Alternative Protocol",
+      "summary": "通过非标准协议（DNS、ICMP、TLS 伪装、第三方服务）外泄，规避基于端口/应用的过滤；DNS 隧道是典型。",
+      "source": "MITRE ATT&CK, T1048"
+    },
+    {
+      "id": "cis-egress",
+      "name": "CIS Controls — 出口流量过滤（Control 12/13 相关）",
+      "summary": "对出站流量做边界过滤与允许列表，是阻断外泄的基础设施手段；应用层外联可被代理拦，原始套接字/DNS 需更深监控。",
+      "source": "CIS Critical Security Controls"
+    },
+    {
+      "id": "c2-beacon",
+      "name": "C2 信标检测（Beaconing）",
+      "summary": "周期性回连（sleep+外联）是 C2 信标特征；静态检测可捕获 sleep 后紧跟外联的代码形态作为可疑信号。",
+      "source": "SANS/业界 C2 检测实践"
+    }
+  ],
+  "quant_model": {
+    "exposure_index": {
+      "name": "外联暴露指数",
+      "range": "0-100",
+      "method": "命中严重度权重累加后封顶 100；判定依据为严重度优先级链（极端>高>中>低），非平均",
+      "sev_weight": {"极端": 100, "高": 40, "中": 12, "低": 3}
+    },
+    "dimension": {
+      "label": "可阻断性",
+      "values": {"可阻断": true, "不可阻断": false, "未知": "unknown"},
+      "meaning": "该外联通道能否被出口过滤/白名单/审计在发布后拦截。应用层 HTTP 外联可阻断；原始套接字、DNS 隧道、反弹 shell 难以在应用层阻断（不可阻断），需内核/网络层手段。",
+      "abuse_warning": "不可阻断≠必须禁止，而是提示需要更深一层的防护（网络层 ACL、eBPF 观测、DNS 监控），硬禁止会逼出更隐蔽的绕过。"
+    },
+    "value_quant": {
+      "name": "安全控制价值量化（避免的外泄阻断与排查工时）",
+      "avoided_exfil_hours": {"极端": 8, "高": 4, "中": 1, "低": 0},
+      "note": "非精确估算，量级参考：极端（整机/全量外泄需停机止损与取证）=8h；高（单通道需定位与封堵）=4h；中（补护栏）=1h；低=0h。"
+    }
+  }
+}

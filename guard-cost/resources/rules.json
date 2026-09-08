@@ -1,0 +1,151 @@
+{
+  "version": "2.0.0",
+  "name": "guard-cost 成本风险规则库",
+  "description": "覆盖付费 API 调用的成本雷区：无界循环、缺预算、缺限速/熔断、无限重试、高单价模型、密钥硬编码。设计立场：看清账单后果再决定，而非硬禁止。",
+  "allowlist": {
+    "paths": ["node_modules", ".git", "__pycache__", "dist", "build"],
+    "patterns": [],
+    "_comment": "上下文白名单由引擎全局常量 ALLOW_KEYWORDS 控制（示例/教学/虚构语境放行），此处 patterns 仅作结构占位，不生效。"
+  },
+  "rules": [
+    {
+      "id": "COST-KEY-HARDCODE",
+      "layer": "leakage",
+      "name": "硬编码 API 密钥",
+      "category": "密钥泄露",
+      "pattern": "sk-[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16}|api[_-]?key\\s*=\\s*[\"'][A-Za-z0-9_\\-]{20,}[\"']",
+      "severity": "高",
+      "intent": "密钥写死在代码里，一旦泄露即被盗刷，账单失控",
+      "recoverable": true,
+      "note": "改用环境变量 / 密钥管理服务"
+    },
+    {
+      "id": "COST-WHILE-TRUE-API",
+      "layer": "loop",
+      "name": "while True 内调付费 API",
+      "category": "无界循环",
+      "pattern": "(?is)while\\s+(?:True|1)\\s*:[^\\n]*\\n(?:[ \\t].*\\n)*?[^\\n]*(?:api|openai|llm|completions|client\\.|fetch|requests\\.|invoke|generate)",
+      "severity": "极端",
+      "intent": "无终止条件的循环内调付费 API，花费无上限",
+      "recoverable": true,
+      "note": "必须设最大迭代次数与预算上限"
+    },
+    {
+      "id": "COST-FOR-API",
+      "layer": "loop",
+      "name": "for 循环内批量调付费 API",
+      "category": "无界循环",
+      "pattern": "(?is)(?:for\\s+[^:]*?:[^\\n]*\\n(?:[ \\t].*\\n)*?[^\\n]*(?:api|openai|llm|completions|client\\.|fetch|requests\\.|invoke|generate))",
+      "severity": "高",
+      "intent": "循环内调付费 API，需有次数上界与预算护栏",
+      "recoverable": true,
+      "note": "循环需有确定上界，或加预算熔断"
+    },
+    {
+      "id": "COST-BATCH-UNBOUNDED",
+      "layer": "loop",
+      "name": "map/Promise.all 内调付费 API",
+      "category": "无界循环",
+      "pattern": "(?i)(?:\\.map\\(\\s*[^)]*?(?:api|openai|fetch|requests|invoke)|Promise\\.all\\([^)]*?(?:api|openai|fetch|requests|invoke))",
+      "severity": "高",
+      "intent": "对集合逐元素并发/映射调付费 API，集合大小决定花费",
+      "recoverable": true,
+      "note": "集合规模需有上限与批量预算"
+    },
+    {
+      "id": "COST-NO-BUDGET",
+      "layer": "budget",
+      "name": "付费调用无预算上限",
+      "category": "预算缺失",
+      "pattern": "[\\s\\S]+",
+      "severity": "中",
+      "intent": "调用付费 API 但代码里没有任何预算/额度/上限字样",
+      "recoverable": true,
+      "require_api": true,
+      "absent_patterns": ["max_tokens", "max_cost", "budget", "token_limit", "quota", "cost_limit", "MAX_SPEND", "limit", "上限"],
+      "note": "补 max_tokens / 预算常量 / 熔断"
+    },
+    {
+      "id": "COST-NO-RATELIMIT",
+      "layer": "rate",
+      "name": "付费调用无限速",
+      "category": "限速缺失",
+      "pattern": "[\\s\\S]+",
+      "severity": "中",
+      "intent": "调用付费 API 但无速率限制 / 退避字样",
+      "recoverable": true,
+      "require_api": true,
+      "absent_patterns": ["rate_limit", "ratelimit", "throttle", "time.sleep", "sleep(", "semaphore", "RateLimiter", "限流", "限速"],
+      "note": "补 rate limiter / 退避等待"
+    },
+    {
+      "id": "COST-NO-CIRCUIT",
+      "layer": "rate",
+      "name": "付费调用无熔断",
+      "category": "熔断缺失",
+      "pattern": "[\\s\\S]+",
+      "severity": "中",
+      "intent": "调用付费 API 但无熔断 / 兜底 / 重试降级字样",
+      "recoverable": true,
+      "require_api": true,
+      "absent_patterns": ["circuit_breaker", "circuitbreaker", "tenacity", "fallback", "@retry", "backoff", "熔断", "兜底"],
+      "note": "补 circuit breaker / fallback 降级"
+    },
+    {
+      "id": "COST-RETRY-INF",
+      "layer": "retry",
+      "name": "重试次数无上限",
+      "category": "重试失控",
+      "pattern": "(?i)retry[^;\\n]{0,60}(?:=\\s*-1|inf|while)",
+      "severity": "高",
+      "intent": "重试次数设为 -1 / inf / while 重试，失败会无限烧钱",
+      "recoverable": true,
+      "note": "重试需有上限 + 指数退避"
+    },
+    {
+      "id": "COST-EXPENSIVE-MODEL",
+      "layer": "model",
+      "name": "使用高单价模型",
+      "category": "高单价模型",
+      "pattern": "(?i)(gpt-4|o1|o1-|claude-opus|claude-3-opus|gemini-ultra|gpt-4-turbo)",
+      "severity": "中",
+      "intent": "直接调用高单价模型，无降级路径",
+      "recoverable": true,
+      "require_api": true,
+      "note": "评估是否可降级到 mini/轻量版"
+    },
+    {
+      "id": "COST-SAFE-BUDGET",
+      "layer": "safe",
+      "name": "显式预算常量（安全实践）",
+      "category": "安全变体",
+      "pattern": "(?i)(MAX_COST|BUDGET|max_spend|cost_limit|预算)",
+      "severity": "低",
+      "intent": "设置了预算上限，属于安全实践",
+      "recoverable": true,
+      "safe_signal": true
+    },
+    {
+      "id": "COST-SAFE-CIRCUIT",
+      "layer": "safe",
+      "name": "熔断/重试装饰器（安全实践）",
+      "category": "安全变体",
+      "pattern": "(?i)(circuit_breaker|tenacity|fallback|@retry|backoff)",
+      "severity": "低",
+      "intent": "已加熔断或重试装饰器，属于安全实践",
+      "recoverable": true,
+      "safe_signal": true
+    },
+    {
+      "id": "COST-SAFE-QUOTA",
+      "layer": "safe",
+      "name": "限速/配额中间件（安全实践）",
+      "category": "安全变体",
+      "pattern": "(?i)(quota|rate_limit|RateLimiter|semaphore|限流|限速)",
+      "severity": "低",
+      "intent": "已加限速或配额控制，属于安全实践",
+      "recoverable": true,
+      "safe_signal": true
+    }
+  ]
+}

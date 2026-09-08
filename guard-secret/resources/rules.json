@@ -1,0 +1,37 @@
+{
+  "version": "2.0.0",
+  "description": "guard-secret 检测规则库：正则规则（精度层）+ 熵阈值（召回层）+ 白名单（降误报层）。rules.json 可增改，不写死在代码里。",
+  "entropy": {
+    "min_length": 20,
+    "hex_threshold": 4.0,
+    "base64_threshold": 4.5,
+    "generic_threshold": 4.5
+  },
+  "rules": [
+    {"id": "SEC-AWS-01", "name": "AWS 访问密钥 ID", "category": "云凭据", "severity": "高", "pattern": "AKIA[0-9A-Z]{16}"},
+    {"id": "SEC-AWS-02", "name": "AWS 秘密访问密钥", "category": "云凭据", "severity": "极端", "pattern": "(?i)aws_secret_access_key\\s*[:=]\\s*[\"']?[A-Za-z0-9/+]{40}[\"']?"},
+    {"id": "SEC-GCP-01", "name": "GCP 服务账号私钥", "category": "云凭据", "severity": "极端", "pattern": "\"type\"\\s*:\\s*\"service_account\""},
+    {"id": "SEC-AZ-01", "name": "Azure 连接字符串密钥", "category": "云凭据", "severity": "高", "pattern": "(?i)AccountKey=[A-Za-z0-9+/=]{40,}"},
+    {"id": "SEC-SSH-01", "name": "SSH 私钥头", "category": "SSH 私钥", "severity": "极端", "pattern": "-----BEGIN (RSA |EC |DSA |OPENSSH )?PRIVATE KEY-----"},
+    {"id": "SEC-PWD-01", "name": "硬编码密码赋值", "category": "数据库密码", "severity": "高", "pattern": "(?i)(password|passwd|pwd)\\s*[:=]\\s*[\"'][^\"']{4,}[\"']"},
+    {"id": "SEC-DB-01", "name": "数据库连接串含口令", "category": "数据库密码", "severity": "高", "pattern": "(?i)(mysql|postgresql|postgres|mongodb|redis|mssql|jdbc)://[^:]+:[^@\\s]+@"},
+    {"id": "SEC-API-01", "name": "API Key / Secret 赋值", "category": "API 密钥", "severity": "高", "pattern": "(?i)(api[_-]?key|apikey|secret[_-]?key|access[_-]?token|client[_-]?secret)\\s*[:=]\\s*[\"'][^\"']{8,}[\"']"},
+    {"id": "SEC-TOK-01", "name": "Bearer / JWT 令牌", "category": "令牌", "severity": "高", "pattern": "(?i)(bearer\\s+[A-Za-z0-9._-]{12,}|eyJ[A-Za-z0-9_-]{10,}\\.[A-Za-z0-9_-]{10,}\\.)"},
+    {"id": "SEC-SLACK-01", "name": "Slack Token", "category": "令牌", "severity": "高", "pattern": "xox[baprs]-[A-Za-z0-9-]{10,}"},
+    {"id": "SEC-GH-01", "name": "GitHub Token", "category": "令牌", "severity": "高", "pattern": "(gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,})"},
+    {"id": "SEC-GOOG-01", "name": "Google API Key", "category": "API 密钥", "severity": "高", "pattern": "AIza[0-9A-Za-z_-]{35}"},
+    {"id": "SEC-STRIPE-01", "name": "Stripe 密钥", "category": "支付凭据", "severity": "高", "pattern": "(sk|rk)_(live|test)_[A-Za-z0-9]{16,}"},
+    {"id": "SEC-PRV-01", "name": "私钥/证书赋值", "category": "私钥", "severity": "高", "pattern": "(?i)(private[_-]?key|client[_-]?key)\\s*[:=]\\s*[\"']?[A-Za-z0-9/+_=-]{20,}[\"']?"}
+  ],
+  "allowlist": {
+    "paths": [
+      "node_modules", "package-lock.json", "*.lock", "*.min.js",
+      ".env.example", "__pycache__", ".git", "venv", ".venv"
+    ],
+    "patterns": [
+      "example", "your-.*-here", "xxxx", "xxxxxx", "dummy", "test", "testing",
+      "placeholder", "changeme", "sample", "mock", "fake", "todo", "fixme",
+      "demo", "foobar", "<.*>", "AKIA[A-Z]{0,4}[x*]{4,}"
+    ]
+  }
+}

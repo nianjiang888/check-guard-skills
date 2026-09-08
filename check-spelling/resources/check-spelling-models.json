@@ -1,0 +1,40 @@
+{
+  "version": "2.0.0",
+  "domain": "spelling",
+  "theories": [
+    {
+      "name": "错别字是面向读者的头号专业度折损（Typo / Wrong Character）",
+      "point": "帐号/登陆/挡案这类常见错别字不影响程序运行，却直接拉低文档可信度；读者一眼就能看出不专业。",
+      "use": "支撑 SPELL-AUTH-TYPO（常见错别字，中）。词典 resources/typos.json 收录 30 组高频错→对。"
+    },
+    {
+      "name": "编辑漏删痕迹（Double Word / 叠字）",
+      "point": "的的、了了、the the 这类相邻重复几乎都是修订时漏删一个，属确定性编辑缺陷。",
+      "use": "支撑 SPELL-REPEAT-CN（中文功能词叠字，中）与 SPELL-REPEAT-EN（英文相邻重复，低）。"
+    },
+    {
+      "name": "中文排版卫生（CJK Typography / 全角半角）",
+      "point": "中文后跟半角标点、中英文间缺空格，属于可被工具确定性判定的排版瑕疵，统一处理可提升阅读体验。",
+      "use": "支撑 SPELL-PUNCT-HALF（中文后跟半角标点，低）与 SPELL-CJK-SPACE（中英文缺空格，低），后者限定散文类扩展名避免误伤代码。"
+    },
+    {
+      "name": "文档结构一致性（Heading Hierarchy）",
+      "point": "Markdown 标题从一级直接跳到三级会破坏目录生成与大纲导航，属结构性缺陷。",
+      "use": "支撑 SPELL-HEADING-SKIP（标题层级跳跃，低），仅作用于 .md/.markdown。"
+    },
+    {
+      "name": "为什么是静态 lint 而非实时校对",
+      "point": "实时校对（Grammarly 等）慢、需联网、难进 CI。静态 lint 在发布前就能跑、可重跑、可留证据，专门拦住「错别字/叠字/标点/层级」这类不需语义理解就能判定的问题。",
+      "use": "整体方法论：check-spelling 把「发布前最后一次文字体检」变成可重跑、可留证的静态检查。"
+    }
+  ],
+  "quant_model": {
+    "dimension": "可修正性",
+    "index_name": "验证暴露指数",
+    "index_formula": "各发现严重度权重累加（极端100/高40/中12/低3），上限100",
+    "value_name": "预计避免返工工时",
+    "value_formula": "各发现严重度对应工时累加（极端8/高4/中1/低0）",
+    "severity_weights": {"极端": 100, "高": 40, "中": 12, "低": 3},
+    "avoid_hours": {"极端": 8, "高": 4, "中": 1, "低": 0}
+  }
+}

@@ -1,0 +1,143 @@
+{
+  "version": "2.0.0",
+  "name": "guard-privacy PII 字段脱敏护栏规则库",
+  "allowlist": {
+    "paths": []
+  },
+  "rules": [
+    {
+      "id": "PII-HARDCODE",
+      "name": "PII 字段硬编码（明文入源码）",
+      "layer": "pii_field",
+      "category": "PII 字段识别",
+      "severity": "极端",
+      "intent": "身份证/手机号/银行卡等敏感字段直接写成源码字面量，随版本库扩散且难以回收，是最高危的 PII 泄露",
+      "recoverable": true,
+      "note": "建议：PII 从配置/密钥库/数据库读取，绝不入源码；已泄露的需轮换并清理历史",
+      "pattern": "(?:id_card|idcard|身份证|sfz|bank_card|bankcard|银行卡|信用卡|ssn|身份证号|passport|护照|mobile|phone|cellphone|手机|手机号)\\s*[=:]\\s*[\"']\\d[\\d\\s-]{5,}[\"']"
+    },
+    {
+      "id": "PII-LOG-RAW",
+      "name": "日志打印原始 PII 字段",
+      "layer": "log",
+      "category": "日志泄露",
+      "severity": "极端",
+      "intent": "logger.info 等把身份证/手机号/姓名等原始 PII 写进日志，日志通常被广泛可读且留存久，等于长期明文暴露",
+      "recoverable": true,
+      "note": "建议：日志只记脱敏后的令牌/哈希，禁止记原始 PII",
+      "pattern": "(?:log|logger|logging)\\.\\w+\\([^)]*\\b(?:id_card|idcard|身份证|sfz|mobile|phone|cellphone|手机|手机号|bank_card|bankcard|银行卡|信用卡|ssn|身份证号|passport|护照|name|姓名|realname|address|地址|住址|email|邮箱|mail|id_number|证件号)\\b"
+    },
+    {
+      "id": "PII-PRINT-RAW",
+      "name": "输出/打印原始 PII 字段",
+      "layer": "log",
+      "category": "日志泄露",
+      "severity": "极端",
+      "intent": "print 原始 PII 到标准输出/控制台，在屏幕、CI 日志、容器日志里留下明文",
+      "recoverable": true,
+      "note": "建议：输出前脱敏，控制台/日志统一走脱敏中间件",
+      "pattern": "print\\([^)]*\\b(?:id_card|idcard|身份证|sfz|mobile|phone|cellphone|手机|手机号|bank_card|bankcard|银行卡|信用卡|ssn|身份证号|passport|护照|name|姓名|realname|address|地址|住址|email|邮箱|mail|id_number|证件号)\\b"
+    },
+    {
+      "id": "PII-EXTERNAL",
+      "name": "PII 外传给第三方（无脱敏）",
+      "layer": "external",
+      "category": "外传第三方",
+      "severity": "极端",
+      "intent": "把 PII 随 post/put/notify/send 等发出去，落第三方即失控，合规风险最高",
+      "recoverable": true,
+      "note": "建议：外传前令牌化/假名化；与第三方签数据处理协议，最小化字段",
+      "pattern": "(?:requests\\.(?:post|put)|httpx\\.(?:post|put)|axios\\.(?:post|put)|urlopen|send|upload|notify|push|smtp)\\([^)]*\\b(?:id_card|idcard|身份证|sfz|mobile|phone|cellphone|手机|手机号|bank_card|bankcard|银行卡|信用卡|ssn|身份证号|passport|护照|name|姓名|realname|address|地址|住址|email|邮箱|mail|id_number|证件号)\\b"
+    },
+    {
+      "id": "PII-ID-PATTERN",
+      "name": "18 位身份证号字面",
+      "layer": "pii_field",
+      "category": "PII 字段识别",
+      "severity": "高",
+      "intent": "独立 18 位（末位可为 X）数字高度疑似身份证号，属强 PII",
+      "recoverable": true,
+      "note": "建议：身份证号必须加密存储、展示脱敏（如 110***********1234）",
+      "pattern": "\\b\\d{17}[\\dxX]\\b"
+    },
+    {
+      "id": "PII-PHONE-PATTERN",
+      "name": "11 位手机号字面",
+      "layer": "pii_field",
+      "category": "PII 字段识别",
+      "severity": "高",
+      "intent": "1[3-9] 开头的 11 位数字是标准手机号格式，属强 PII",
+      "recoverable": true,
+      "note": "建议：手机号加密存储、展示脱敏（如 138****8000）",
+      "pattern": "\\b1[3-9]\\d{9}\\b"
+    },
+    {
+      "id": "PII-STORE-PLAIN",
+      "name": "明文存储 PII 字段",
+      "layer": "store",
+      "category": "明文存储",
+      "severity": "高",
+      "intent": "insert/save/store/update 直接写入 PII 字段且无脱敏，落库即明文风险",
+      "recoverable": true,
+      "note": "建议：入库前脱敏/加密；区分明文列与密文列，最小字段原则",
+      "pattern": "(?:insert|save|store|update|set|write|persist)\\([^)]*\\b(?:id_card|idcard|身份证|sfz|mobile|phone|cellphone|手机|手机号|bank_card|bankcard|银行卡|信用卡|ssn|身份证号|passport|护照|name|姓名|realname|address|地址|住址|email|邮箱|mail|id_number|证件号)\\b"
+    },
+    {
+      "id": "PII-EXPOSE-RESPONSE",
+      "name": "接口返回/展示直带完整 PII",
+      "layer": "export",
+      "category": "返回/展示",
+      "severity": "高",
+      "intent": "return 的响应体里直接带完整 PII 字段，前端/调用方拿到明文，易在传输与缓存中泄露",
+      "recoverable": true,
+      "note": "建议：响应层统一脱敏；按角色授权展示完整度",
+      "pattern": "return\\b[\\s\\S]{0,120}?\\b(?:id_card|idcard|身份证|sfz|mobile|phone|cellphone|手机|手机号|bank_card|bankcard|银行卡|信用卡|ssn|身份证号|passport|护照|name|姓名|realname|address|地址|住址|email|邮箱|mail|id_number|证件号)\\b"
+    },
+    {
+      "id": "PII-EMAIL-PATTERN",
+      "name": "邮箱字面（PII）",
+      "layer": "pii_field",
+      "category": "PII 字段识别",
+      "severity": "中",
+      "intent": "邮箱是可用于身份关联与钓鱼的 PII，明文出现需确认是否必要",
+      "recoverable": true,
+      "note": "建议：邮箱展示脱敏（如 a***@example.com）；存储按需哈希",
+      "pattern": "\\b[\\w.+-]+@[\\w-]+\\.[\\w.-]+\\b"
+    },
+    {
+      "id": "PII-ADDRESS",
+      "name": "住址字段明文处理",
+      "layer": "pii_field",
+      "category": "PII 字段识别",
+      "severity": "中",
+      "intent": "addr/address/地址 字段带字面地址串，属可定位个人的 PII",
+      "recoverable": true,
+      "note": "建议：地址按需分级展示，避免完整明文落日志",
+      "pattern": "(?:addr|address|地址|住址|home_addr)\\s*[=:]\\s*[\"'][^\"']{4,}[\"']"
+    },
+    {
+      "id": "PII-MASK-MISSING",
+      "name": "涉及 PII 字段但全文无脱敏函数",
+      "layer": "pii_field",
+      "category": "PII 字段识别",
+      "severity": "中",
+      "intent": "文件里出现 PII 字段名，却找不到任何脱敏/加密/令牌化/哈希调用——说明这些 PII 大概率以明文被处理",
+      "recoverable": true,
+      "note": "建议：凡涉及 PII 的落库/日志/返回/外传，必须配套脱敏或加密函数",
+      "req_regex": "(?:id_card|idcard|身份证|sfz|mobile|phone|cellphone|手机|手机号|bank_card|bankcard|银行卡|信用卡|ssn|身份证号|passport|护照|name|姓名|realname|address|地址|住址|email|邮箱|mail|id_number|证件号)",
+      "absent_patterns": ["mask", "desensitize", "脱敏", "tokenize", "encrypt", "hash", "匿名化", "假名化", "pseudonym", "令牌化", "salt"]
+    },
+    {
+      "id": "PII-SAFE-DESENSITIZE",
+      "name": "脱敏/加密/令牌化（安全变体）",
+      "layer": "safe",
+      "category": "安全变体",
+      "severity": "低",
+      "intent": "mask/desensitize/脱敏/tokenize/encrypt/hash/匿名化/假名化 是对 PII 的正确处置，是好做法，不当命中",
+      "recoverable": true,
+      "note": "鼓励信号",
+      "pattern": "(?:mask|desensitize|脱敏|tokenize|encrypt|匿名化|假名化|pseudonym|hash|salt|令牌化)",
+      "safe_signal": true
+    }
+  ]
+}

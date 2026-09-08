@@ -1,0 +1,143 @@
+{
+  "version": "2.0.0",
+  "name": "guard-dependency 依赖漏洞与投毒护栏规则库",
+  "allowlist": {
+    "paths": []
+  },
+  "rules": [
+    {
+      "id": "DEP-PIN-LOOSE",
+      "name": "版本范围过松（未固定）",
+      "layer": "manifest",
+      "category": "依赖清单",
+      "severity": "中",
+      "intent": "用 ^ ~ * latest >= 这类浮动范围，构建不可复现，随时可能拉进一个被投毒的新版本",
+      "recoverable": true,
+      "note": "建议：锁文件 + 精确版本（无浮动符号），CI 开启 --frozen-lockfile",
+      "pattern": "(?::|=)\\s*[\"'](?:[\\^~*xX]|latest|>=?|>)"
+    },
+    {
+      "id": "DEP-GIT-URL",
+      "name": "依赖取自任意 git/VCS 源",
+      "layer": "manifest",
+      "category": "依赖清单",
+      "severity": "高",
+      "intent": "git+/github:/git@ 这类源不在 registry 管控内，无版本审查、无完整性保证，是投毒高发入口",
+      "recoverable": true,
+      "note": "建议：除非内网受控镜像，否则统一走受信 registry 并固定 commit",
+      "pattern": "(?:git\\+|github:|git@|git://|ssh://git)"
+    },
+    {
+      "id": "DEP-HTTP-SOURCE",
+      "name": "依赖源使用明文 http 协议",
+      "layer": "integrity",
+      "category": "完整性",
+      "severity": "极端",
+      "intent": "明文 http 拉依赖，中间人可篡改响应注入恶意代码（MITM 投毒），危害整条供应链",
+      "recoverable": true,
+      "note": "建议：所有源强制 https + 证书校验，禁止明文 http 源",
+      "pattern": "http:(?=//)"
+    },
+    {
+      "id": "DEP-EOL-KNOWN",
+      "name": "命中已知投毒/废弃版本",
+      "layer": "version",
+      "category": "版本风险",
+      "severity": "高",
+      "intent": "event-stream 3.3.6（后门）、colors 1.4.44（抗议软件）、faker 6.6.6（自毁）、left-pad 0.0.3（删包事件）、coa/rc/ua-parser-js 投毒——这些是已公开的真实事故版本",
+      "recoverable": true,
+      "note": "建议：立即升级到安全版本，或替换为维护中的等价包",
+      "pattern": "(?:event-stream|left-pad|colors|faker|coa|rc|node-ipc|ua-parser-js|bootstrap-sass)\\b[\"']?\\s*[:=]\\s*[\"'](?:3\\.3\\.6|1\\.4\\.4[34]|6\\.6\\.6|2\\.0\\.[023]|1\\.2\\.[028]|0\\.0\\.3|0\\.7\\.0|2\\.10\\.10)[\"']"
+    },
+    {
+      "id": "DEP-TYPOSQUAT",
+      "name": "疑似 typosquatting 包名",
+      "layer": "version",
+      "category": "版本风险",
+      "severity": "高",
+      "intent": "requets/djago/flaskk/numpyy/panadas 这类是热门包的常见拼写错误，攻击者抢注同名恶意包等着你打错字引入",
+      "recoverable": true,
+      "note": "建议：核对包名拼写与官方仓库，改用确切包名",
+      "pattern": "(?:require\\(|from\\s+)[\"'](?:requets|reqests|djago|flaskk|numpyy|panadas|scikity|tensorfow|pytorchh|cryptographyy|beautiflsoup|selenim|urlllib|request2|flaskkk)[\"']"
+    },
+    {
+      "id": "DEP-CONFUSION",
+      "name": "内部/私有命名包走公开源（依赖混淆）",
+      "layer": "confusion",
+      "category": "混淆/投毒",
+      "severity": "极端",
+      "intent": "internal-/private-/corp-/mycompany- 或 @internal/@corp 这类内部命名出现在公开源清单，正中是依赖混淆攻击（Birsan 2021）：公共 registry 的同名高版本会被优先解析",
+      "recoverable": true,
+      "note": "建议：内部包走私有 registry 并设 namespace 隔离，禁止同名公开包可被拉取",
+      "pattern": "(?:@(?:internal|private|corp|mycompany|acme)[\\w./-]*|(?:internal|private|corp|mycompany|acme)-[\\w.-]+)"
+    },
+    {
+      "id": "DEP-INSTALL-SCRIPT",
+      "name": "安装钩子执行任意代码",
+      "layer": "confusion",
+      "category": "混淆/投毒",
+      "severity": "极端",
+      "intent": "postinstall/preinstall 里直接 curl|sh、node -e、eval、powershell，等于包一装就执行作者任意代码（event-stream 事件流后门即此手法）",
+      "recoverable": true,
+      "note": "建议：禁用自动 install scripts（npm ci --ignore-scripts），人工审计后再开",
+      "pattern": "(?:postinstall|preinstall|install|lifecycle)\\b[\\s\\S]{0,200}?(?:\\bcurl\\b|\\bwget\\b|\\bsh\\b|\\bbash\\b|node\\s+-e|\\beval\\b|\\bpowershell\\b)"
+    },
+    {
+      "id": "DEP-PROTOCOL-HIJACK",
+      "name": "安装指向自定义/非默认源（源劫持）",
+      "layer": "confusion",
+      "category": "混淆/投毒",
+      "severity": "高",
+      "intent": "--registry/--index-url 把依赖解析指到非默认源，可能被用于把请求导到攻击者控制的镜像",
+      "recoverable": true,
+      "note": "建议：统一经受信代理源，禁止命令级自定义源；配置单独评审",
+      "pattern": "(?:--registry|--index-url|--extra-index-url)"
+    },
+    {
+      "id": "DEP-NO-INTEGRITY",
+      "name": "有地址但无完整性哈希",
+      "layer": "integrity",
+      "category": "完整性",
+      "severity": "中",
+      "intent": "锁文件里有 resolved/tarball 地址却看不到 integrity/sha512，无法校验下载内容是否被篡改",
+      "recoverable": true,
+      "note": "建议：开启锁文件完整性字段（npm 默认、pip 用 hash-checking），CI 校验哈希",
+      "req_regex": "(?:\"?resolved\"?|\"url\"|\"tarball\"|resolved)\\s*[:=]",
+      "absent_patterns": ["integrity", "sha512", "sha256", "sha1", "hash", "完整性", "哈希"]
+    },
+    {
+      "id": "DEP-UNTRUSTED-REGISTRY",
+      "name": "配置文件指向自定义 registry",
+      "layer": "source",
+      "category": "来源可信",
+      "severity": "高",
+      "intent": ".npmrc/pip.conf/pypirc/nuget.config 里设了 registry/index-url/source，持久地把解析导到非默认源，需确认是否受信",
+      "recoverable": true,
+      "note": "建议：受信源统一由组织级配置下发，项目级自定义源须评审",
+      "pattern": "(?:index-url|registry|source)\\s*[=:]\\s*\\S+"
+    },
+    {
+      "id": "DEP-FORK-PIN",
+      "name": "依赖锁定到分支/commit 而非发布版",
+      "layer": "source",
+      "category": "来源可信",
+      "severity": "中",
+      "intent": "git+https 源锁到 #main/#master/#dev 或某个 commit，分支可变、不可复现、易被悄然篡改",
+      "recoverable": true,
+      "note": "建议：改用受信 registry 的发布版本并固定版本号，或 vendored 后审代码",
+      "pattern": "git\\+https?://[^\\s\"']+#(?:main|master|dev|develop|HEAD|[0-9a-f]{6,40})"
+    },
+    {
+      "id": "DEP-SAFE",
+      "name": "固定版本 + 完整性校验（安全变体）",
+      "layer": "safe",
+      "category": "安全变体",
+      "severity": "低",
+      "intent": "integrity/sha512/sha256/lockfile/固定版本/完整性校验 是对依赖的正确处置，是好做法，不当命中",
+      "recoverable": true,
+      "note": "鼓励信号",
+      "pattern": "(?:integrity|sha512|sha256|sha1|lockfile|lock-file|固定版本|完整性校验)",
+      "safe_signal": true
+    }
+  ]
+}

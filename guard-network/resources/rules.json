@@ -1,0 +1,142 @@
+{
+  "version": "2.0.0",
+  "name": "guard-network 外联 / 数据外泄通道规则库",
+  "allowlist": {
+    "paths": []
+  },
+  "rules": [
+    {
+      "id": "NET-EGRESS-POST",
+      "name": "出站 POST/PUT 带数据体",
+      "layer": "egress",
+      "category": "外联通道",
+      "severity": "高",
+      "intent": "requests.post/put、axios.post 等把数据体发到外部地址，是数据外泄最经典的出口，需确认接收方是否可信",
+      "recoverable": true,
+      "note": "建议：出站目标走白名单域名；敏感字段先脱敏再发；保留审计日志",
+      "pattern": "(?:requests|httpx|axios|aiohttp)\\.(?:post|put)\\s*\\("
+    },
+    {
+      "id": "NET-EXFIL-B64POST",
+      "name": "编码后外发（base64→POST）",
+      "layer": "egress",
+      "category": "外联通道",
+      "severity": "高",
+      "intent": "先把数据 base64/hex 编码再 POST 出去，是绕过内容审查的外泄手法，编码与出站紧邻更可疑",
+      "recoverable": true,
+      "note": "建议：对出站内容做 DLP 检测，编码不等于安全；核查接收方与业务必要性",
+      "pattern": "(?:base64|b64encode|binascii\\.b2a_base64)\\([^)]*\\)[\\s\\S]{0,80}(?:requests\\.(?:post|put)|socket\\.connect|urlopen|urllib)"
+    },
+    {
+      "id": "NET-EGRESS-SOCKET",
+      "name": "原始 socket 直连外部",
+      "layer": "egress",
+      "category": "外联通道",
+      "severity": "极端",
+      "intent": "socket.connect 直连外部地址，绕过应用层代理与出口白名单，流量无审计、难阻断",
+      "recoverable": false,
+      "note": "建议：禁止裸 socket 直连；统一走带审计的出口网关/SDK；对外部地址强制白名单",
+      "pattern": "(?:socket\\.)?connect\\s*\\(\\s*\\("
+    },
+    {
+      "id": "NET-DNS-EXFIL",
+      "name": "编码数据喂 DNS 解析（隧道）",
+      "layer": "dns",
+      "category": "DNS 隧道",
+      "severity": "高",
+      "intent": "把 base64/hex 数据拼进子域名再发起 DNS 查询，是经典的 DNS 隧道外泄手法，DNS 常不在出口过滤范围",
+      "recoverable": false,
+      "note": "建议：对出站 DNS 做长度/熵值监控；限制非常规 TLD 的解析",
+      "pattern": "(?:base64|binascii\\.b2a_hex|hex|b2a_hex)\\([^)]*\\)[\\s\\S]{0,60}(?:gethostbyname|resolver\\.query|dns\\.query|dns\\.resolve)"
+    },
+    {
+      "id": "NET-DNS-DYNAMIC",
+      "name": "动态域名服务（C2 常用）",
+      "layer": "dns",
+      "category": "DNS 隧道",
+      "severity": "中",
+      "intent": "dyndns/no-ip/duckdns 等动态域名常被 C2 用作随时切换的解析入口，需确认是否业务必须",
+      "recoverable": true,
+      "note": "建议：出口防火墙封禁动态域名服务；确属业务则纳入白名单并加监控",
+      "pattern": "[a-z0-9-]+\\.(?:dyndns|no-ip|ddns|duckdns|freedns|hopto|servehttp|zapto|syslinux)\\.[a-z]{2,}"
+    },
+    {
+      "id": "NET-C2-KNOWN",
+      "name": "硬编码超长/随机子域（DGA/C2 特征）",
+      "layer": "c2",
+      "category": "C2 信标",
+      "severity": "极端",
+      "intent": "20+ 位随机字母或 16+ 位十六进制子域，符合恶意软件 DGA 或 C2 域名生成算法特征，命中即高危",
+      "recoverable": true,
+      "note": "建议：此类域名一律禁止解析；确认为业务随机串则改放配置并加说明",
+      "pattern": "(?:[a-f0-9]{16,}|[a-z0-9]{20,})\\.[a-z0-9-]+\\.[a-z]{2,}"
+    },
+    {
+      "id": "NET-C2-BEACON",
+      "name": "定时外联（信标）",
+      "layer": "c2",
+      "category": "C2 信标",
+      "severity": "高",
+      "intent": "sleep 之后紧跟外联调用，是 C2 信标（beaconing）的典型形态：周期性回连接收指令",
+      "recoverable": true,
+      "note": "建议：周期性外联须有业务依据并走白名单；对回连频率做监控与限流",
+      "pattern": "sleep\\([^)]*\\)[\\s\\S]{0,200}?(?:requests\\.(?:get|post)|socket\\.connect|urlopen)"
+    },
+    {
+      "id": "NET-TUNNEL-REVSHELL",
+      "name": "反弹 shell（/dev/tcp）",
+      "layer": "tunnel",
+      "category": "隧道/代理",
+      "severity": "极端",
+      "intent": "/dev/tcp/ 或 /dev/udp/ 是 bash 内置反弹 shell 手法，直接把 shell 交给外部，等于整机沦陷",
+      "recoverable": false,
+      "note": "建议：生产禁用 bash 网络重定向；统一走受控跳板与审计通道",
+      "pattern": "/dev/(?:tcp|udp)/"
+    },
+    {
+      "id": "NET-TUNNEL-PROXY",
+      "name": "内网穿透/反向代理（ngrok/frp/ssh -R）",
+      "layer": "tunnel",
+      "category": "隧道/代理",
+      "severity": "高",
+      "intent": "ngrok/frp/ssh -R 把内网暴露到公网，是数据外泄与横向移动的常用通道",
+      "recoverable": true,
+      "note": "建议：禁止随意开穿透；确属运维需审批并记录暴露面与时效",
+      "pattern": "(?:ngrok|frpc?|autossh|ssh\\s+-[a-zA-Z]*R\\b|--remote-addr)"
+    },
+    {
+      "id": "NET-RAW-SOCKET",
+      "name": "原始套接字/抓包（SOCK_RAW）",
+      "layer": "raw",
+      "category": "原始套接字",
+      "severity": "高",
+      "intent": "SOCK_RAW/AF_PACKET/scapy 可抓全网流量或伪造包，能力极强，滥用即嗅探或中间人",
+      "recoverable": false,
+      "note": "建议：原始套接字需 root 且受控；非必要不开放，启用留痕",
+      "pattern": "(?:SOCK_RAW|AF_PACKET|socket\\.AF_INET,\\s*socket\\.SOCK_RAW|rawsocket)"
+    },
+    {
+      "id": "NET-RAW-PACKET",
+      "name": "构造/注入数据包",
+      "layer": "raw",
+      "category": "原始套接字",
+      "severity": "中",
+      "intent": "手工 pack 数据包（struct 的 ! 格式/IPPROTO_RAW/scapy.IP）用于伪造或注入，属底层网络能力",
+      "recoverable": false,
+      "note": "建议：确认是否真需底层造包；保留用途说明与权限控制",
+      "pattern": "(?:IPPROTO_RAW|socket\\.IPPROTO|scapy\\.IP|\\.pack\\(\\s*[\"']!)"
+    },
+    {
+      "id": "NET-SAFE-EGRESS",
+      "name": "出口白名单 + TLS 校验 + 审计（安全变体）",
+      "layer": "safe",
+      "category": "安全变体",
+      "severity": "低",
+      "intent": "出站走白名单域名、开启 TLS 校验（verify=True）、留审计日志，是好做法，不当命中",
+      "recoverable": true,
+      "note": "鼓励信号",
+      "pattern": "(?:verify=True|allowlist|whitelist|egress_proxy|tls_verify|audit_log)",
+      "safe_signal": true
+    }
+  ]
+}

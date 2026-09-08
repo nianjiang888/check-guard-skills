@@ -1,0 +1,190 @@
+{
+  "meta": {
+    "skill": "check-script-health",
+    "display": "短视频脚本体检评分",
+    "version": "1.0.0",
+    "index_name": "完播健康指数",
+    "layer_weights": {
+      "hook": 0.20,
+      "retention": 0.15,
+      "density": 0.12,
+      "cta": 0.13,
+      "compliance": 0.20,
+      "emotion": 0.10,
+      "spoken": 0.10
+    },
+    "recommended_chars_per_sec": [3.0, 4.5],
+    "default_duration_sec": 60,
+    "redline_severity": "极端"
+  },
+  "rules": [
+    {
+      "id": "R-HOOK-01",
+      "layer": "hook",
+      "severity": "高",
+      "recoverable": true,
+      "kind": "opening",
+      "intent": "前 3 秒没有强钩子（悬念/冲突/反常识/利益承诺/痛点提问）",
+      "rec": "开场必须一句话砸出钩子：用反常识、冲突、悬念或痛点提问把人留住，前 3 秒不要铺垫。",
+      "tier": "free"
+    },
+    {
+      "id": "R-HOOK-02",
+      "layer": "hook",
+      "severity": "低",
+      "recoverable": true,
+      "kind": "opening_addr",
+      "intent": "开场没有用「你/您」直接对话观众，距离感偏强",
+      "rec": "用「你」直接对观众说话，比第三人称叙事更容易让人代入。",
+      "tier": "free"
+    },
+    {
+      "id": "R-RET-01",
+      "layer": "retention",
+      "severity": "高",
+      "recoverable": true,
+      "kind": "missing_any",
+      "terms": ["反转", "反差", "没想到", "居然", "竟然", "颠覆", "原来", "真相", "悬念", "伏笔", "别急", "先别划走", "关键", "秘密", "重点", "别划走", "反直觉", "反常识", "顺序错了", "你以为"],
+      "intent": "中段缺少留人机制（反转/反差/悬念/冲突），观众容易在中途划走",
+      "rec": "中段埋一个反转、反差或悬念，让观众「想看后面」，别平铺直叙讲完。",
+      "tier": "free"
+    },
+    {
+      "id": "R-RET-02",
+      "layer": "retention",
+      "severity": "中",
+      "recoverable": true,
+      "kind": "repetition",
+      "intent": "出现车轱辘话（同一句话或短语反复说），信息没有往前推进",
+      "rec": "删掉重复表达，每一句都往前推进一个新信息点。",
+      "tier": "free"
+    },
+    {
+      "id": "R-DEN-01",
+      "layer": "density",
+      "severity": "中",
+      "recoverable": true,
+      "kind": "density",
+      "intent": "口头禅/水词过多（啊、呢、然后、就是说、那个…），信息密度被稀释",
+      "rec": "删掉口头禅和填充词，把时长留给干货，短视频每字都该有信息。",
+      "tier": "free"
+    },
+    {
+      "id": "R-DEN-02",
+      "layer": "density",
+      "severity": "低",
+      "recoverable": true,
+      "kind": "missing_any",
+      "terms": ["[0-9]{2,}"],
+      "intent": "缺少具体数字或案例，可信度和信息量偏弱",
+      "rec": "加一两个具体数字、金额、天数或真实案例，比空泛描述更有说服力。",
+      "tier": "pro"
+    },
+    {
+      "id": "R-DEN-03",
+      "layer": "density",
+      "severity": "中",
+      "recoverable": true,
+      "kind": "length",
+      "intent": "篇幅与短视频时长明显不匹配（过短没内容 / 过长像长视频）",
+      "rec": "按「时长 × 每秒 3–4.5 字」控制口播量：60 秒约 180–270 字，别写成小作文或一句话。",
+      "tier": "free"
+    },
+    {
+      "id": "R-CTA-01",
+      "layer": "cta",
+      "severity": "高",
+      "recoverable": true,
+      "kind": "ending",
+      "intent": "结尾没有行动号召（点赞/关注/评论/转发/收藏/下期）",
+      "rec": "结尾给明确指令或抛一个互动问题，把完播流量沉淀成互动数据。",
+      "tier": "free"
+    },
+    {
+      "id": "R-CTA-02",
+      "layer": "cta",
+      "severity": "低",
+      "recoverable": true,
+      "kind": "missing_any",
+      "terms": ["你觉得", "评论区", "你怎么看", "说说你的", "你敢", "你试过", "你遇到过"],
+      "intent": "没有引导评论的互动提问，评论率容易偏低",
+      "rec": "结尾抛一个代入式问题（「你有没有遇到过…」），拉高评论率。",
+      "tier": "pro"
+    },
+    {
+      "id": "R-COM-01",
+      "layer": "compliance",
+      "severity": "极端",
+      "recoverable": true,
+      "kind": "regex_present",
+      "patterns": ["最(好|强|新|快|大|高|全|牛|猛|省|划算|赚|好用)", "第一(名|个|品牌|强|选择|首选|供应商|商圈)", "顶级", "极致", "绝无仅有", "唯一(的)?", "空前", "史无前例", "万能", "100%", "百分之百", "绝对(的)?(不|没错|安全|有效)", "国家级", "世界级", "王牌", "巅峰", "独一(无二|家)"],
+      "intent": "使用广告法极限词（最/第一/顶级/唯一/国家级/100%…），属违规高风险",
+      "rec": "删掉绝对化极限词，改用可验证的相对表述，避免被判定虚假宣传导致限流或下架。",
+      "tier": "free"
+    },
+    {
+      "id": "R-COM-02",
+      "layer": "compliance",
+      "severity": "极端",
+      "recoverable": true,
+      "kind": "regex_present",
+      "patterns": ["根治", "治愈", "治好", "包好", "包治", "药到病除", "三天见效", "一用就好", "永不复发", "一针见效", "彻底康复", "百分百治愈", "无副作用"],
+      "intent": "对功效作绝对化承诺（根治/治愈/包好/永不复发…），违规高风险",
+      "rec": "不要承诺疗效或结果，改用「有助于/可参考」等合规表述。",
+      "tier": "free"
+    },
+    {
+      "id": "R-COM-03",
+      "layer": "compliance",
+      "severity": "极端",
+      "recoverable": true,
+      "kind": "regex_present",
+      "patterns": ["加微信", "加我微信", "私聊", "私信我", "主页有(微|v|V|vx|微信)", "移步(私|主)", "加我(的)?(微|v|V)", "联系我(的)?(微|v)", "v信", "薇信", "威信", "微信号"],
+      "intent": "引导私下交易或站外引流（加微信/私聊/主页有 vx…），违规高风险",
+      "rec": "用平台合规的组件做转化，不要直接引导加微信或私域，避免被限流。",
+      "tier": "free"
+    },
+    {
+      "id": "R-COM-04",
+      "layer": "compliance",
+      "severity": "极端",
+      "recoverable": true,
+      "kind": "regex_present",
+      "patterns": ["稳赚", "稳赚不赔", "一夜暴富", "月入(十万|百万|几万)", "日入过万", "零风险", "包赚", "躺赚", "轻松月入", "一本万利", " guaranteed"],
+      "intent": "夸大收益或承诺稳赚（稳赚/一夜暴富/零风险/月入十万…），违规高风险",
+      "rec": "把收益表述换成真实可证的说法，不承诺结果、不暗示无风险。",
+      "tier": "free"
+    },
+    {
+      "id": "R-EMO-01",
+      "layer": "emotion",
+      "severity": "中",
+      "recoverable": true,
+      "kind": "missing_any",
+      "terms": ["扎心", "破防", "心酸", "无奈", "崩溃", "委屈", "孤独", "焦虑", "谁懂", "共鸣", "你是不是", "你有没有", "太难了", "不容易", "辛酸", "心累", "同感", "眼泪", "想哭"],
+      "intent": "缺少情绪共鸣点，观众难被触动、转发意愿低",
+      "rec": "加一个真实可共鸣的情绪点（委屈、无奈、扎心），让人想转给同样处境的人。",
+      "tier": "free"
+    },
+    {
+      "id": "R-SPK-01",
+      "layer": "spoken",
+      "severity": "高",
+      "recoverable": true,
+      "kind": "spoken",
+      "intent": "书面腔偏重（出现「综上所述/然而/基于/鉴于/值得注意的是」等书面连词，或长难句）",
+      "rec": "改短句、说人话，像跟朋友聊天而不是念稿，去掉书面连词。",
+      "tier": "free"
+    },
+    {
+      "id": "R-SPK-02",
+      "layer": "spoken",
+      "severity": "中",
+      "recoverable": true,
+      "kind": "long_sentence",
+      "intent": "存在超长句子（单句超过 45 字无标点），口播易气短、观众易走神",
+      "rec": "把长句拆成两三个短句，口播更顺、节奏更好。",
+      "tier": "pro"
+    }
+  ]
+}

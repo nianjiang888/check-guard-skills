@@ -1,0 +1,30 @@
+{
+  "version": "2.0.0",
+  "description": "guard-skill 字段、边界与退出码定义。",
+  "verdict_rules": {
+    "exit_code_blocked": 4,
+    "blocked_levels": ["高", "极端"],
+    "warn_levels": ["中", "低"]
+  },
+  "exit_codes": {
+    "0": "通过（可安装）",
+    "1": "参数错（缺路径/路径非法）",
+    "2": "IO·运行错（资源缺失/报告写入失败）",
+    "3": "未知命令",
+    "4": "已拦截（高风险，建议不要安装）"
+  },
+  "boundary": {
+    "is": [
+      "静态代码与元数据审查（入职背调）",
+      "输出可存档的审查报告 verdict_report.md",
+      "聚合拦截价值生成 guard-ledger.md"
+    ],
+    "is_not": [
+      "运行时沙箱隔离",
+      "动态行为/流量分析",
+      "保证 100% 拦住所有后门（学界共识无单点银弹）"
+    ],
+    "privacy": "审查全程在本地进行，不向外发送被审包的任何内容。"
+  },
+  "artifacts": ["verdict_report.md", "guard-ledger.md"]
+}

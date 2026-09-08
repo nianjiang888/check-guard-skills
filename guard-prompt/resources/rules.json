@@ -1,0 +1,88 @@
+{
+  "version": "2.0.0",
+  "description": "guard-prompt 检测规则库：三维（指令劫持信号 hijack / 结构·分隔符注入 structure / 意图目标 intent）。rules.json 可增改，不写死在代码里。severity 取值：极端/高/中/低。",
+  "stealth_chars": ["\u200b", "\u200c", "\u200d", "\ufeff", "\u00ad"],
+  "rules": [
+    {
+      "id": "PROMPT-HIJACK-01", "layer": "hijack", "name": "直接指令覆盖（中文）", "category": "指令劫持",
+      "severity": "极端", "intent": "指令劫持",
+      "pattern": "(?:忽略|无视|忘掉|忘记|不要理|别管|抛弃)[^。\n]{0,15}(?:上面|之前|先前|从前|所有|一切)(?:的)?(?:指令|提示|要求|规则|设定|约束|prompt)"
+    },
+    {
+      "id": "PROMPT-HIJACK-02", "layer": "hijack", "name": "重写系统/角色设定", "category": "指令劫持",
+      "severity": "高", "intent": "指令劫持",
+      "pattern": "(?:重新设定|重置|覆盖|改写|修改)[^。\n]{0,15}(?:你的)?(?:系统提示|角色|人设|设定|身份)"
+    },
+    {
+      "id": "PROMPT-HIJACK-03", "layer": "hijack", "name": "角色覆盖（你现在是/assume you are）", "category": "指令劫持",
+      "severity": "中", "intent": "角色伪装",
+      "pattern": "(?:你现在是|你从此是|从现在起你是|假设你是|现在你扮演|you are now|you are an|assume you are|act as)"
+    },
+    {
+      "id": "PROMPT-HIJACK-04", "layer": "hijack", "name": "直接指令覆盖（英文）", "category": "指令劫持",
+      "severity": "极端", "intent": "指令劫持",
+      "pattern": "(?:ignore|disregard|forget|neglect)[^.\n]{0,20}(?:previous|above|earlier|all|prior)(?: instructions?| prompts?| rules?| system)?"
+    },
+    {
+      "id": "PROMPT-HIJACK-05", "layer": "hijack", "name": "越狱/无限制模式口令", "category": "指令劫持",
+      "severity": "高", "intent": "越狱",
+      "pattern": "(?:developer mode|jailbreak|越狱|无限制模式|无审查|dan mode|无视一切规则|bypass.{0,10}filter)"
+    },
+    {
+      "id": "PROMPT-STRUCT-01", "layer": "structure", "name": "伪造系统分隔符", "category": "结构注入",
+      "severity": "高", "intent": "结构注入",
+      "pattern": "(?:<system\\b|</system>|###\\s*system|[-\u2014]{3,}\\s*system\\s*[-\u2014]{3,}|\\[\\s*system\\s*\\])"
+    },
+    {
+      "id": "PROMPT-STRUCT-02", "layer": "structure", "name": "HTML 注释藏指令", "category": "结构注入",
+      "severity": "高", "intent": "结构注入",
+      "pattern": "<!--[\\s\\S]{0,200}?(?:忽略|指令|密码|发送|执行|secret|system|prompt|忽略之前的)[\\s\\S]{0,200}?-->"
+    },
+    {
+      "id": "PROMPT-STRUCT-04", "layer": "structure", "name": "伪造工具调用/函数结果", "category": "结构注入",
+      "severity": "中", "intent": "工具滥用",
+      "pattern": "(?:\"name\"\\s*:\\s*\"|function_call|<\\s*tool_result\\s*>|action\\s*:|observation\\s*:)"
+    },
+    {
+      "id": "PROMPT-INTENT-EXFIL", "layer": "intent", "name": "数据外传意图", "category": "意图目标",
+      "severity": "高", "intent": "数据外传",
+      "pattern": "(?:发送(?:到|给)|外传|泄露(?:给|到)|转发到|导出到|上传到)[^。\n]{0,20}(?:http|外部|我|邮箱|email|服务器|地址)"
+    },
+    {
+      "id": "PROMPT-INTENT-PRIV", "layer": "intent", "name": "权限越权意图", "category": "意图目标",
+      "severity": "高", "intent": "权限越权",
+      "pattern": "(?:执行命令|运行命令|rm\\s*-rf|sudo|以管理员|管理员权限|提权|execute command|run a? command)"
+    },
+    {
+      "id": "PROMPT-INTENT-JAIL", "layer": "intent", "name": "越狱意图", "category": "意图目标",
+      "severity": "高", "intent": "越狱",
+      "pattern": "(?:越狱|无限制|无审查|任何请求都|无视一切|突破限制|bypass)"
+    },
+    {
+      "id": "PROMPT-INTENT-TOOL", "layer": "intent", "name": "工具滥用意图", "category": "意图目标",
+      "severity": "中", "intent": "工具滥用",
+      "pattern": "(?:调用工具|使用工具|call tool|use tool|访问文件系统|读取本地文件|读取本地)"
+    },
+    {
+      "id": "PROMPT-INTENT-POISON", "layer": "intent", "name": "上下文污染意图", "category": "意图目标",
+      "severity": "中", "intent": "上下文污染",
+      "pattern": "(?:记住以后|未来当|长期记忆|植入|以后每次|永久|always from now|remember that)"
+    },
+    {
+      "id": "PROMPT-INTENT-SPOOF", "layer": "intent", "name": "角色伪装意图", "category": "意图目标",
+      "severity": "中", "intent": "角色伪装",
+      "pattern": "(?:我是管理员|我是开发者|我是系统|我是你的(?:主人|创建者|开发者)|i am (?:the )?(?:admin|developer|system|owner))"
+    }
+  ],
+  "allowlist": {
+    "paths": [
+      "node_modules", "package-lock.json", "*.lock", "*.min.js",
+      ".env.example", "__pycache__", ".git", "venv", ".venv"
+    ],
+    "patterns": [
+      "your-.*-here", "xxxx", "dummy", "test", "testing",
+      "placeholder", "changeme", "sample", "mock", "fake", "todo", "fixme",
+      "demo", "foobar", "示例", "虚构", "仅为演示", "仅供测试", "教学", "练习题"
+    ]
+  }
+}

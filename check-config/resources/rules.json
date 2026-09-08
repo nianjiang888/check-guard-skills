@@ -1,0 +1,91 @@
+{
+  "version": "2.0.0",
+  "domain": "config",
+  "layers": ["required", "type", "value", "deprecated", "secret", "env", "path", "protocol", "schema", "safe"],
+  "rules": [
+    {
+      "id": "CFG-SECRET-PLAINTEXT",
+      "layer": "secret",
+      "severity": "极端",
+      "intent": "配置里明文写了密钥/令牌，泄露即需轮换",
+      "pattern": "(?i)(secret|token|password|passwd|pwd|api[_-]?key|apikey|access[_-]?key|private[_-]?key|client[_-]?secret)\\s*[:=]\\s*(?!(your|xxx+|changeme|placeholder|dummy|fake|test|example|sample|demo|mock|todo|fixme|xxxx)[\\w_-]*)([\\w./+=@_-]{6,})",
+      "recoverable": false,
+      "rec": "把明文密钥移到环境变量或密钥管理服务，并轮换已暴露的密钥"
+    },
+    {
+      "id": "CFG-INSECURE-PROTOCOL",
+      "layer": "protocol",
+      "severity": "高",
+      "intent": "配置里用了明文 http 协议，传输可被窃听",
+      "pattern": "http:(?=//)",
+      "recoverable": true,
+      "rec": "内部/外部调用改用 https"
+    },
+    {
+      "id": "CFG-HARDCODED-PATH",
+      "layer": "path",
+      "severity": "高",
+      "intent": "配置里硬编码了绝对路径，换环境即失效",
+      "pattern": "(?:[A-Za-z]:[\\\\/]|/[\\w.-]+(?:/[\\w.-]+)+)",
+      "recoverable": true,
+      "rec": "改用相对路径或环境变量拼接"
+    },
+    {
+      "id": "CFG-DEPRECATED-KEY",
+      "layer": "deprecated",
+      "severity": "低",
+      "intent": "使用了废弃配置项",
+      "pattern": "(enable_ssl|ssl_verify|legacy_mode|use_http|old_api)\\b",
+      "recoverable": true,
+      "rec": "迁移到新配置项"
+    },
+    {
+      "id": "CFG-INVALID-LOGLEVEL",
+      "layer": "value",
+      "severity": "中",
+      "intent": "日志级别取值不在允许集合内",
+      "pattern": "(?i)(log(?:_)?level|logging\\.level)\\s*[:=]\\s*['\"]?(?!(debug|info|warn|warning|error|critical|fatal|trace)['\"]?)[\\w-]+['\"]?",
+      "recoverable": true,
+      "rec": "把日志级别设为 debug/info/warn/error/critical 之一"
+    },
+    {
+      "id": "CFG-PORT-OOR",
+      "layer": "type",
+      "severity": "高",
+      "intent": "端口号超出合法范围（>65535）",
+      "pattern": "(?i)(port|listen_port)\\s*[:=]\\s*['\"]?(6[6-9]\\d{3}|[7-9]\\d{4}|\\d{6,})['\"]?",
+      "recoverable": true,
+      "rec": "把端口号改到 1–65535 之间"
+    },
+    {
+      "id": "CFG-MISSING-REQUIRED",
+      "layer": "required",
+      "severity": "高",
+      "intent": "连接类配置缺少鉴权字段（token/密钥/账号）",
+      "req_regex": "(?i)(host|server|db|database|dsn)\\s*[:=]",
+      "absent_patterns": ["token", "api_key", "apikey", "secret", "password", "passwd", "user", "username", "access_key"],
+      "recoverable": true,
+      "rec": "为连接配置补上鉴权字段（优先用环境变量注入）"
+    },
+    {
+      "id": "CFG-ENV-MISMATCH",
+      "layer": "env",
+      "severity": "中",
+      "intent": "生产环境仍开启 debug",
+      "req_all": [
+        "(?i)(environment|env|stage|profile|mode)\\s*[:=]\\s*['\"]?(prod|production|release|online)['\"]?",
+        "(?i)debug\\s*[:=]\\s*(true|1|on|yes)"
+      ],
+      "recoverable": true,
+      "rec": "生产环境关闭 debug"
+    },
+    {
+      "id": "CFG-CLEAN",
+      "layer": "safe",
+      "severity": "低",
+      "intent": "配置已带校验/模式引用，鼓励",
+      "req_regex": "(schema|validate|validator|jsonschema|pydantic)",
+      "recoverable": true
+    }
+  ]
+}

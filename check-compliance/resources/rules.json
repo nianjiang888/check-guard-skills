@@ -1,0 +1,75 @@
+{
+  "version": "2.0.1",
+  "domain": "compliance",
+  "layers": [
+    "claim",
+    "disclaimer",
+    "source",
+    "pii",
+    "meta",
+    "safe"
+  ],
+  "rules": [
+    {
+      "id": "COMPLIANCE-SUPERLATIVE",
+      "layer": "claim",
+      "kind": "regex",
+      "severity": "高",
+      "intent": "出现极限词（国家级/世界级/第一品牌/唯一指定/顶级/极致/百分百/全球领先/领导品牌/王牌/首选/绝无仅有/史无前例/空前/最强国/最先进），违反广告法风险高",
+      "pattern": "(国家级|世界级|第一品牌|唯一指定|顶级|极致|百分百|全球领先|领导品牌|王牌|首选|绝无仅有|史无前例|空前|最强国|最先进)",
+      "recoverable": true,
+      "rec": "删去极限词，改用可佐证的中性表述"
+    },
+    {
+      "id": "COMPLIANCE-NO-DISCLAIMER",
+      "layer": "disclaimer",
+      "kind": "regex",
+      "severity": "中",
+      "intent": "内容涉及疗效/收益/投资/赚钱却无免责声明，易被认定为违规承诺",
+      "req_regex": "(疗效|治愈|收益|保本|投资|赚钱|获利|增值)",
+      "absent_patterns": ["(免责|风险提示|仅供参考|不构成建议|投资有风险)"],
+      "recoverable": true,
+      "rec": "补上免责/风险提示声明"
+    },
+    {
+      "id": "COMPLIANCE-NO-SOURCE",
+      "layer": "source",
+      "kind": "regex",
+      "severity": "中",
+      "intent": "出现统计/百分比/倍数/增长等数据断言却无来源标注，无法核验",
+      "req_regex": "(%|百分之|倍|据统计|数据显示|增长)",
+      "absent_patterns": ["(来源|出处|引用|据|年报)"],
+      "recoverable": true,
+      "rec": "为数据补上来源标注"
+    },
+    {
+      "id": "COMPLIANCE-PII",
+      "layer": "pii",
+      "kind": "regex",
+      "severity": "中",
+      "intent": "内容含未脱敏 PII（身份证号/手机号/邮箱），对外发布有泄露风险",
+      "pattern": "(\\d{17}[\\dXx]|(?<!\\d)1[3-9]\\d{9}(?!\\d)|[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,})",
+      "recoverable": true,
+      "rec": "对 PII 做脱敏或移出公开内容"
+    },
+    {
+      "id": "COMPLIANCE-NO-DATE",
+      "layer": "meta",
+      "kind": "regex",
+      "severity": "低",
+      "intent": "对外发布物没有任何日期/版权年份，读者无法判断时效性",
+      "absent_patterns": ["(20\\d{2}[-/年]\\d{1,2}[-/月]\\d{1,2}|20\\d{2}年|©\\s*20\\d{2})"],
+      "recoverable": true,
+      "rec": "补上发布日期或版权年份"
+    },
+    {
+      "id": "COMPLIANCE-CLEAN",
+      "layer": "safe",
+      "kind": "regex",
+      "severity": "低",
+      "intent": "已接入合规流程（ad-review/合规审查/法律顾问/terms-of-service/privacy-policy/法律意见书等），鼓励",
+      "pattern": "(ad-review|合规审查|法律顾问|terms-of-service|privacy-policy|法律意见书)",
+      "recoverable": true
+    }
+  ]
+}

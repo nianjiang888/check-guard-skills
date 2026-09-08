@@ -1,0 +1,153 @@
+{
+  "version": "2.0.0",
+  "name": "guard-memory 记忆污染风险规则库",
+  "allowlist": {
+    "paths": []
+  },
+  "rules": [
+    {
+      "id": "MEM-WRITE-UNTRUSTED",
+      "name": "不可信来源直写记忆",
+      "layer": "write",
+      "category": "写入边界",
+      "severity": "高",
+      "intent": "工具返回值/外部抓取/用户输入直接写进长期记忆，无信任边界，等于把别人塞的话当自己的长期信念",
+      "recoverable": true,
+      "note": "建议：写入前做信任分级与内容校验，不可信来源先进隔离区",
+      "pattern": "\\b(?:[A-Za-z_]*?(?:memory|remember|mem|long_term|context_store|notes|kb|store))\\b[\\w.]*?\\.(?:add|set|append|push|write|save|update|put|insert)\\s*\\(",
+      "req_memory": true,
+      "req_untrusted": true
+    },
+    {
+      "id": "MEM-POISON-PHRASE",
+      "name": "记忆内容含注入指令",
+      "layer": "poison",
+      "category": "投毒信号",
+      "severity": "极端",
+      "intent": "把\"忽略之前指令/你现在是X\"之类写进记忆，等于把后门固化进长期上下文，下次对话照做",
+      "recoverable": true,
+      "note": "建议：记忆写入做指令性短语检测，命中即拦下人工确认",
+      "pattern": "(?:记住|铭记|remember|memory\\.add|store)\\b[^;。\\n]{0,120}?(?:忽略|无视|forget|disregard|ignore|你现在是|you are now)"
+    },
+    {
+      "id": "MEM-POISON-IMPERATIVE",
+      "name": "记忆含强制性人设指令",
+      "layer": "poison",
+      "category": "投毒信号",
+      "severity": "高",
+      "intent": "以\"记住你必须是/remember that you are\"形式把角色/权限指令固化进记忆，属于社会工程式后门",
+      "recoverable": true,
+      "note": "建议：记忆内容禁止携带角色/权限变更指令",
+      "pattern": "(?:记住你|remember that you|remember you)\\b[^;。\\n]{0,120}?(?:要|必须|是|should|must|are|will|always)"
+    },
+    {
+      "id": "MEM-RAG-NOCAP",
+      "name": "检索上下文无预算上限",
+      "layer": "rag",
+      "category": "RAG 溢出",
+      "severity": "中",
+      "intent": "RAG/召回不加长度截断，不可信长文会淹没系统指令，间接注入得逞",
+      "recoverable": true,
+      "note": "建议：检索结果设 max_tokens/top_k/窗口上限，并按信任排序",
+      "pattern": "\\b(?:rag|retrieve|similarity_search|get_relevant|recall|search_docs|fetch_docs|get_context|embedding_search)\\b",
+      "req_retrieval": true,
+      "absent_patterns": ["limit", "max", "截断", "truncat", "top_k", "k=", "budget", "窗口"]
+    },
+    {
+      "id": "MEM-RAG-UNTRUSTED",
+      "name": "不可信文档喂上下文无标注",
+      "layer": "rag",
+      "category": "RAG 溢出",
+      "severity": "高",
+      "intent": "外部抓取的文档直接拼进上下文却未标注来源/信任级，模型无法区分指令与数据",
+      "recoverable": true,
+      "note": "建议：外部内容入上下文前打\"不可信\"标签并隔离渲染",
+      "pattern": "\\b(?:rag|retrieve|similarity_search|get_relevant|recall|search_docs|fetch_docs|get_context|embedding_search)\\b",
+      "req_retrieval": true,
+      "req_untrusted": true
+    },
+    {
+      "id": "MEM-CROSS-SESSION",
+      "name": "全局/共享记忆无隔离",
+      "layer": "session",
+      "category": "跨会话混染",
+      "severity": "高",
+      "intent": "模块级单例记忆被所有用户/会话共享，A 的污染记忆会流到 B，跨主体混染",
+      "recoverable": true,
+      "note": "建议：记忆按 user_id/session_id 分桶，禁止全局可读写单例",
+      "pattern": "(?:global_memory|shared_memory|GLOBAL_MEM|shared_mem|memory_store\\s*=\\s*(?:Memory|Store|dict|MemoryStore)\\s*\\()"
+    },
+    {
+      "id": "MEM-SESSION-NOID",
+      "name": "记忆读写无用户/会话作用域",
+      "layer": "session",
+      "category": "跨会话混染",
+      "severity": "中",
+      "intent": "记忆写入不绑定 user_id/session_id，事后无法定位污染来自哪次会话",
+      "recoverable": true,
+      "note": "建议：每次记忆读写携带 user_id/session_id 作用域",
+      "pattern": "\\b(?:[A-Za-z_]*?(?:memory|remember|mem|long_term|context_store|notes|kb|store))\\b[\\w.]*?\\.(?:add|set|append|push|write|save|update|put|insert)\\s*\\(",
+      "req_memory": true,
+      "absent_patterns": ["user_id", "session_id", "tenant", "隔离", "scope"]
+    },
+    {
+      "id": "MEM-NO-PROVENANCE",
+      "name": "记忆条目无溯源元数据",
+      "layer": "provenance",
+      "category": "溯源缺失",
+      "severity": "中",
+      "intent": "写入不记来源/时间/作者，污染进了记忆也无从审计\"这条是谁塞的\"",
+      "recoverable": true,
+      "note": "建议：每条记忆带 source/ts/author/trust_level",
+      "pattern": "\\b(?:[A-Za-z_]*?(?:memory|remember|mem|long_term|context_store|notes|kb|store))\\b[\\w.]*?\\.(?:add|set|append|push|write|save|update|put|insert)\\s*\\(",
+      "req_memory": true,
+      "absent_patterns": ["source", "provenance", "origin", "来源", "作者", "timestamp", "ts", "who"]
+    },
+    {
+      "id": "MEM-LEAK-SYSPROMPT",
+      "name": "记忆存储系统提示",
+      "layer": "leak",
+      "category": "系统提示/密钥泄露",
+      "severity": "极端",
+      "intent": "把 system prompt 写进可被外发的记忆，等于把最高权限指令交给任意读取记忆的人",
+      "recoverable": true,
+      "note": "建议：系统提示与记忆存储物理隔离，禁止互写",
+      "pattern": "(?:memory|remember|mem|notes|kb)\\b[\\w.]*?\\.(?:add|set|append|write|save|update|put)\\s*\\([^)]*?(?:system_prompt|system\\.prompt|system prompt)"
+    },
+    {
+      "id": "MEM-LEAK-SECRET",
+      "name": "记忆存储密钥/凭据",
+      "layer": "leak",
+      "category": "系统提示/密钥泄露",
+      "severity": "极端",
+      "intent": "把 api_key/secret/token 写进记忆，记忆一旦被外发即凭据泄露",
+      "recoverable": true,
+      "note": "建议：密钥走专用密钥库，绝不入记忆；若已写入立即轮换",
+      "pattern": "(?:memory|remember|mem|notes|kb)\\b[\\w.]*?\\.(?:add|set|append|write|save|update|put)\\s*\\([^)]*?(?:api_key|secret|password|token|密钥)"
+    },
+    {
+      "id": "MEM-SAFE-PROVENANCE",
+      "name": "写入带溯源（安全变体）",
+      "layer": "safe",
+      "category": "安全变体",
+      "severity": "低",
+      "intent": "记忆写入记录 source/provenance/trust_level/author，是可审计的好做法，不当命中",
+      "recoverable": true,
+      "note": "鼓励信号",
+      "pattern": "(?:memory|remember|mem|notes|kb)\\b[\\w.]*?\\.(?:add|set|update|put)\\([^)]*?(?:source|provenance|trust_level|author|origin|来源)\\s*=",
+      "safe_signal": true
+    },
+    {
+      "id": "MEM-SAFE-QUARANTINE",
+      "name": "隔离/ quarantine（安全变体）",
+      "layer": "safe",
+      "category": "安全变体",
+      "severity": "低",
+      "intent": "不可信内容先进隔离区再决定是否提权为长期记忆，是好做法，不当命中",
+      "recoverable": true,
+      "note": "鼓励信号",
+      "pattern": "(?:quarantine|隔离|isolate|沙箱|sandbox)\\b",
+      "safe_signal": true
+    }
+  ]
+}

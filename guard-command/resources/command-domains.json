@@ -1,0 +1,32 @@
+{
+  "version": "2.0.0",
+  "name": "guard-command 域定义（字段/边界/退出码）",
+  "domain": "高危命令 / 危险参数拦截",
+  "risk_verb": "误执行（accidental execution）",
+  "report_fields": [
+    "time", "target", "verdict", "exposure_index",
+    "recoverable", "irrecoverable", "findings", "avoided_recovery_hours"
+  ],
+  "verdict_rules": {
+    "极端": "命中任意极端级规则（rm -rf/dd 写盘/格式化/设备重定向/fork bomb）→ 禁止上线",
+    "高": "命中任意高级规则（chmod 777/000/提权/curl|sh/版本历史破坏）→ 拦下需人工确认",
+    "中": "命中中级规则（--no-verify 绕过钩子）→ 可继续但补护栏",
+    "低": "仅安全变体信号或干净 → 放行"
+  },
+  "exit_codes": {
+    "0": "通过（低危/干净）",
+    "1": "参数错（缺路径/路径不存在）",
+    "2": "IO·运行错（资源解析失败/报告写入失败）",
+    "3": "未知命令",
+    "4": "已拦截（高/极端风险，建议不要直接上线）"
+  },
+  "boundary": {
+    "in_scope": "对脚本与命令字符串做静态检测：危险命令本体、危险参数（--force/--no-verify/fork bomb）、权限与提权、网络直执行、版本历史破坏。",
+    "out_scope": "不实际拦命令、不感知运行时真实执行情况、不对命令「是否真会被运行」做判定；只量化静态可见风险。",
+    "honesty": "不承诺 100% 拦住；危险后果取决于命令是否真被执行。误报会杀死产品，故危险命令本体的匹配做了边界收敛（rm -rf 而非任意 rm）。"
+  },
+  "artifacts": {
+    "scan": "command_report.md（含判定、命中清单、命令危险暴露指数、可回滚性、价值量化、机器可读 JSON 尾块）",
+    "ledger": "guard-ledger.md（聚合多份报告的价值账本）"
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "version": "2.0.0",
+  "name": "guard-privacy 理论根基与量化模型",
+  "theories": [
+    {
+      "id": "k-anonymity",
+      "name": "k-匿名（Sweeney 2002）",
+      "summary": "发布数据需保证每条记录至少与 k-1 条其他记录在准标识上不可区分；脱敏（泛化/抑制）是实现手段之一。",
+      "source": "Sweeney L. k-anonymity: A Model for Protecting Privacy. 2002"
+    },
+    {
+      "id": "differential-privacy",
+      "name": "差分隐私（Dwork 2006）",
+      "summary": "通过噪声机制使单条记录的增减不影响输出分布，提供可量化的隐私保障；适合统计型对外接口。",
+      "source": "Dwork C. Differential Privacy. 2006"
+    },
+    {
+      "id": "pipl-gdpr",
+      "name": "PIPL / GDPR 个人信息保护",
+      "summary": "中国个人信息保护法与欧盟 GDPR 均要求处理个人信息遵循最小必要、去标识化、加密等义务；明文泄露面临罚则与索赔。",
+      "source": "PIPL（2021）/ GDPR（EU 2016/679）"
+    },
+    {
+      "id": "ner-pii",
+      "name": "命名实体识别（NER）用于 PII 发现",
+      "summary": "用 NER 或正则识别姓名/证件/手机/邮箱/地址等实体，是静态 PII 发现的基础；本工具用正则启发式覆盖常见字段。",
+      "source": "NLP 实体识别实践"
+    }
+  ],
+  "quant_model": {
+    "exposure_index": {
+      "name": "PII 暴露指数",
+      "range": "0-100",
+      "method": "命中严重度权重累加后封顶 100；判定依据为严重度优先级链（极端>高>中>低），非平均",
+      "sev_weight": {"极端": 100, "高": 40, "中": 12, "低": 3}
+    },
+    "dimension": {
+      "label": "可脱敏性",
+      "values": {"可脱敏": true, "不可脱敏": false, "未知": "unknown"},
+      "meaning": "检测到的 PII 暴露是否可加脱敏治理。本工具命中的均为『未脱敏』状态（可脱敏=true 表示可经脱敏/加密/令牌化治理），用于提示『这些点都该加护栏』。",
+      "abuse_warning": "可脱敏≠已经脱敏；它只说明风险可被治理。真正豁免要看是否存在脱敏/加密函数，由 PII-SAFE-DESENSITIZE 之类信号与人工确认共同判断。"
+    },
+    "value_quant": {
+      "name": "安全控制价值量化（避免的脱敏治理与合规排查工时）",
+      "avoided_desensitize_hours": {"极端": 8, "高": 4, "中": 1, "低": 0},
+      "note": "非精确估算，量级参考：极端（明文身份证/手机号外传，需应急脱敏+合规上报）=8h；高（明文落库/返回）=4h；中（邮箱/地址/缺脱敏函数）=1h；低=0h。"
+    }
+  }
+}

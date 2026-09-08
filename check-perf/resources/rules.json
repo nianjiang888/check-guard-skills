@@ -1,0 +1,75 @@
+{
+  "version": "2.0.0",
+  "domain": "perf",
+  "layers": [
+    "timeout",
+    "loop",
+    "query",
+    "blocking",
+    "pagination",
+    "safe"
+  ],
+  "rules": [
+    {
+      "id": "PERF-NO-TIMEOUT",
+      "layer": "timeout",
+      "kind": "regex",
+      "severity": "高",
+      "intent": "网络/IO 调用（requests/httpx/fetch/socket/urllib）没有设置 timeout，一旦对端卡死会永久挂起",
+      "req_regex": "(requests\\.get|requests\\.post|httpx\\.(get|post)|fetch\\(|socket\\.connect|urllib\\.request|aiohttp\\.request)",
+      "absent_patterns": ["timeout"],
+      "recoverable": true,
+      "rec": "给网络调用加上 timeout 参数"
+    },
+    {
+      "id": "PERF-WHILE-TRUE",
+      "layer": "loop",
+      "kind": "regex",
+      "severity": "中",
+      "intent": "出现 while True 无限循环，若无超时/退出条件会占满 CPU",
+      "pattern": "while\\s+True",
+      "recoverable": true,
+      "rec": "为 while True 加退出条件或超时保护"
+    },
+    {
+      "id": "PERF-NPLUS1",
+      "layer": "query",
+      "kind": "regex",
+      "severity": "中",
+      "intent": "在循环里逐条查库（for ... in ... 内调用 .query/.filter/.all/.get），典型 N+1 查询",
+      "req_all": ["for\\s+\\w+\\s+in\\s+\\w+", "\\.query\\(|\\.filter\\(|\\.all\\(|\\.get\\("],
+      "recoverable": true,
+      "rec": "改为批量查询或 join，避免循环内单条查库"
+    },
+    {
+      "id": "PERF-SYNC-IN-ASYNC",
+      "layer": "blocking",
+      "kind": "regex",
+      "severity": "中",
+      "intent": "async 函数里调用同步阻塞（time.sleep/subprocess/os.system），会卡住整个事件循环",
+      "req_all": ["async def", "time\\.sleep\\(|subprocess\\.|os\\.system\\("],
+      "recoverable": true,
+      "rec": "改用异步等价物（await asyncio.sleep / aiohttp）"
+    },
+    {
+      "id": "PERF-NO-PAGINATION",
+      "layer": "pagination",
+      "kind": "regex",
+      "severity": "低",
+      "intent": "返回列表用了 .all()/findAll/list() 却没有分页（limit/offset/page/cursor），数据量大时撑爆内存",
+      "req_regex": "(\\.all\\(\\)|findAll|list\\()",
+      "absent_patterns": ["(limit|offset|page|cursor|分页|paginate)"],
+      "recoverable": true,
+      "rec": "为列表接口加分页参数"
+    },
+    {
+      "id": "PERF-CLEAN",
+      "layer": "safe",
+      "kind": "regex",
+      "severity": "低",
+      "intent": "已接入性能分析/压测工具（cProfile/py-spy/pprof/locust/wrk/benchmark 等），鼓励",
+      "pattern": "(cProfile|py-spy|pprof|locust|wrk|benchmark|perf|tracemalloc|scalene)",
+      "recoverable": true
+    }
+  ]
+}

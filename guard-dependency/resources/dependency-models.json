@@ -1,0 +1,53 @@
+{
+  "version": "2.0.0",
+  "name": "guard-dependency 理论根基与量化模型",
+  "theory": {
+    "slsa": {
+      "name": "SLSA（Supply-chain Levels for Software Artifacts）",
+      "summary": "源码→构建→制品的供应链溯源框架，L1-L4 逐级强制 provenance（构建来源、依赖清单、不可篡改签名）。本工具对应 L1-L2 的「依赖清单可审计、构建可复现」。",
+      "source": "详见 SLSA 官方规范（slsa.dev）"
+    },
+    "sbom": {
+      "name": "SBOM（软件物料清单，NTIA 最小元素 / EO 14028）",
+      "summary": "每个制品必须能列出其全部组件与版本，是漏洞响应与投毒溯源的前提。本工具扫描出的「命中清单」即一份轻量 SBOM 缺口视图。",
+      "source": "详见 NTIA SBOM 最小元素指南"
+    },
+    "cvss": {
+      "name": "CVSS（通用漏洞评分系统）",
+      "summary": "漏洞严重度量化标准（0-10）。本工具不替代 CVSS，而是用「严重度优先级链」把多类依赖风险收敛成可行动的判定，避免被单点高 CVSS 稀释。",
+      "source": "详见 FIRST CVSS 规范"
+    },
+    "dependency_confusion": {
+      "name": "依赖混淆攻击（Birsan 2021）",
+      "summary": "内部包（如 @corp/utils）同名发布到公共 registry 的高版本，会被包管理器优先解析，从而拉取攻击者控制的代码。本工具 DEP-CONFUSION 检测此命名特征。",
+      "source": "详见 Birsan 2021 公开研究"
+    },
+    "typosquatting": {
+      "name": "typosquatting（拼写抢注）",
+      "summary": "攻击者抢注热门包的常见错拼名（requets/flaskk），等开发者打错字时引入。本工具 DEP-TYPOSQUAT 检测。",
+      "source": "PyPI/npm 官方安全公告多次披露"
+    },
+    "ghost_dependency": {
+      "name": "幽灵依赖（ghost dependency）",
+      "summary": "代码 import 了某包，但清单未声明（靠传递依赖或误装存在）。本工具通过扫描未声明的第三方引用提示人工核对。",
+      "source": "详见 pnpm/ yarn 幽灵依赖分析文献"
+    }
+  },
+  "quant_model": {
+    "dimension": "可治理性",
+    "risk_index": {
+      "name": "依赖风险指数",
+      "range": "0-100",
+      "method": "命中严重度权重累加后封顶 100；判定取严重度优先级链（极端>高>中>低），不取平均",
+      "severity_weight": {"极端": 100, "高": 40, "中": 12, "低": 3}
+    },
+    "verdict_chain": "极端 > 高 > 中 > 低（取最高，非平均）",
+    "governable_dimension": "每条标 可治理（可经升级/替换/加锁/换源/关脚本治理），提示这些点都该补护栏",
+    "value_quant": {
+      "name": "安全控制价值量化",
+      "avoided_hours": {"极端": 8, "高": 4, "中": 1, "低": 0},
+      "meaning": "拦下后估算避免的「依赖治理与漏洞修复」工时（非精确，经验值）"
+    }
+  },
+  "honest_note": "仅静态检测清单与安装配置，不解析真实依赖树、不实际拦安装；结论取决于该包是否真被安装并加载。"
+}

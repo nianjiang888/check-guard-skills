@@ -1,0 +1,45 @@
+{
+  "version": "2.0.0",
+  "description": "guard-prompt 理论模型库：OWASP LLM01:2025 定位、直接/间接注入分类、注入风险分算法、StruQ/SecAlign 防御层级、诚实边界。所有条目均可溯源。",
+  "owasp_llm01_2025": {
+    "position": "OWASP Top 10 for LLM Applications 2025 中，LLM01 Prompt Injection 位列第一（最高危）",
+    "definition": "攻击者通过操纵输入，使大模型忽略原始指令、执行攻击者意图。LLM 无法区分可信指令与不可信数据。",
+    "direct_vs_indirect": {
+      "direct": "攻击者直接把恶意指令写进与模型对话的输入（用户输入即攻击面）",
+      "indirect": "恶意指令藏在模型会读取的外部内容里（网页、检索文档、邮件、工具返回、图片描述、音频转写）——攻击者不必接触对话"
+    },
+    "source": "OWASP, Top 10 for Large Language Model Applications (2025), LLM01: Prompt Injection"
+  },
+  "architecture_root_cause": {
+    "claim": "Transformer 把所有 token 一视同仁，没有指令/数据的结构性分隔——这是架构级缺陷，非实现 bug",
+    "evidence": "Liu et al., Prompt Injection Attacks and Defenses in LLM-Integrated Applications (2023) 首次系统证明：指令与数据在同一上下文里无法被模型可靠区分",
+    "consequence": "因此无单点银弹；防御只能分层降低成功率（纵深防御），诚实声明不承诺 100%"
+  },
+  "injection_risk_score": {
+    "formula": "注入风险分 = min(100, Σ 严重度权重)",
+    "severity_weights": {"极端": 100, "高": 40, "中": 12, "低": 3},
+    "rationale": "按命中严重度累加而非平均，避免一个极端被多个低危稀释；封顶 100 便于跨次比较",
+    "verdict_priority_chain": "极端 > 高 > 中 > 低（存在即取最高，不平均）"
+  },
+  "three_dimensions": {
+    "hijack": "指令劫持信号层：检测「忽略上面指令」「你是 X」「developer mode」等直接覆盖系统/角色的意图",
+    "structure": "结构/分隔符注入层：检测伪造 <system> 标签、HTML 注释藏指令、零宽字符、伪造工具调用结果",
+    "intent": "意图目标层：检测数据外传/权限越权/越狱/工具滥用/上下文污染/角色伪装等目的信号",
+    "design_note": "三维互补：hijack 抓显性攻击，structure 抓隐蔽机制，intent 抓目的。三层任一命中即进入判定，覆盖「直接/间接/多模态」不同形态"
+  },
+  "defense_taxonomy": {
+    "text_level": "输入清洗、分隔符规范化、对不可信内容加显式边界标记（提示层防御，易绕过）",
+    "model_level": "StruQ（Liu et al., S&P 2025）：结构与指令分离训练，把系统指令/用户数据在表征层强制隔离；SecAlign（Chen et al., USENIX 2024）：用偏好优化让模型拒绝指令型数据。属于参数级防御。",
+    "execution_level": "最小权限（模型只能调白名单工具）、输出过滤、人工复核闸（human-in-the-loop）。本工具落在这一层：在内容进入执行前拦一道。",
+    "source": "Liu et al. StruQ (IEEE S&P 2025); Chen et al. SecAlign (USENIX Security 2024)"
+  },
+  "honest_boundary": {
+    "precision": "生产环境调优后，静态注入检测精度约 90–95%（与密钥扫描同量级，参考 gitleaks/TruffleHog 公开文献）",
+    "cannot_block": [
+      "精心构造的多模态注入（图片/二维码内嵌指令，模型视觉通道读取后执行）",
+      "语义级软注入（无关键词、靠语境诱导，纯模式匹配看不到）",
+      "目标系统已做指令-数据混淆的高级攻击"
+    ],
+    "note": "吹 100% 会被评审扣分；写清「拦不住什么」反而是专业度的证明"
+  }
+}

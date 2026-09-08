@@ -1,0 +1,22 @@
+{
+  "exposure_model": {
+    "version": "1.0.0",
+    "weights": {
+      "极端": 100,
+      "高": 40,
+      "中": 12,
+      "低": 3
+    },
+    "formula": "exposure = sum(weight * count) capped at 100"
+  },
+  "avoid_loss_model": {
+    "version": "1.0.0",
+    "base_amounts": {
+      "极端": 500000,
+      "高": 100000,
+      "中": 50000,
+      "低": 10000
+    },
+    "formula": "avoid_loss = sum(base_amount * count)"
+  }
+}

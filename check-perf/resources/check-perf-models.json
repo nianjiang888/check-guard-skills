@@ -1,0 +1,50 @@
+{
+  "version": "2.0.0",
+  "domain": "perf",
+  "theories": [
+    {
+      "name": "网络/IO 不超时即永久挂起（No Timeout）",
+      "point": "requests/httpx/fetch/socket/urllib 这类调用若不设 timeout，一旦对端卡死或网络抖动，调用方会一直阻塞，线程/协程被占满，引发雪崩。",
+      "use": "支撑 PERF-NO-TIMEOUT（网络/IO 调用无 timeout，高），命中即建议修复。"
+    },
+    {
+      "name": "无限循环与 CPU 占满（Busy Loop）",
+      "point": "while True 没有退出/超时条件会一直占满 CPU，典型表现是服务假死、监控曲线拉平。",
+      "use": "支撑 PERF-WHILE-TRUE（while True 无限循环，中）。"
+    },
+    {
+      "name": "循环内逐条查库放大为 N+1（N+1 Query）",
+      "point": "for ... in ... 内调用 .query/.filter/.all/.get，会把一次可批量完成的查询放大成 N 条，连接与序列化开销随数据量线性爆炸。",
+      "use": "支撑 PERF-NPLUS1（循环内单条查库，中）。"
+    },
+    {
+      "name": "async 里的同步阻塞卡死事件循环（Blocking in Async）",
+      "point": "async def 内调用 time.sleep/subprocess/os.system 会阻塞整个事件循环，所有并发协程一起卡住，异步优势归零。",
+      "use": "支撑 PERF-SYNC-IN-ASYNC（async 内同步阻塞，中）。"
+    },
+    {
+      "name": "无分页列表撑爆内存（No Pagination）",
+      "point": "列表接口直接 .all()/findAll/list() 返回全量，数据增长后内存与响应时间同步恶化，是容量问题的头号温床。",
+      "use": "支撑 PERF-NO-PAGINATION（列表接口无分页，低）。"
+    },
+    {
+      "name": "快检版 vs 深度版（与 guard-* 的边界）",
+      "point": "check-perf 做静态快检（模式命中即报），真正的性能剖析/压测由 cProfile/py-spy/pprof/locust/wrk 等完成。入口不同、互不替代。",
+      "use": "整体方法论：把「上线前性能护栏体检」变成可重跑、可留证的静态检查。"
+    },
+    {
+      "name": "为什么是静态扫描而非实时压测",
+      "point": "实时压测需环境/数据/长耗时，难进 CI。静态模式匹配在部署前就能跑、可重跑、可留证据，专门拦住「无 timeout / 无限循环 / N+1 / async 阻塞 / 无分页」这类不需语义理解就能判定的性能雷区。",
+      "use": "整体方法论：check-perf 定位高频、可确定性判定的性能护栏，不做运行时剖析。"
+    }
+  ],
+  "quant_model": {
+    "dimension": "可修正性",
+    "index_name": "验证暴露指数",
+    "index_formula": "各发现严重度权重累加（极端100/高40/中12/低3），上限100",
+    "value_name": "预计避免返工工时",
+    "value_formula": "各发现严重度对应工时累加（极端8/高4/中1/低0）",
+    "severity_weights": {"极端": 100, "高": 40, "中": 12, "低": 3},
+    "avoid_hours": {"极端": 8, "高": 4, "中": 1, "低": 0}
+  }
+}

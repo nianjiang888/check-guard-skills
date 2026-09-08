@@ -1,0 +1,40 @@
+{
+  "version": "2.0.0",
+  "name": "guard-command 理论模型与量化方法",
+  "theories": {
+    "least_privilege": {
+      "title": "最小权限原则（Saltzer & Schroeder 1975）",
+      "summary": "每个主体只应拥有完成工作所必需的最小权限。sudo su 拿到常驻 root、chmod 777 开放全员写，都是对最小权限的直接违反。",
+      "citation": "Saltzer & Schroeder, The Protection of Information in Computer Systems (1975)。"
+    },
+    "capability_security": {
+      "title": "能力安全（Dennis & Van Horn 1966）",
+      "summary": "权限应作为可撤销、可限定的「能力」授予，而非靠全局 root 身份。危险命令本质是把不可撤销的全局能力一次性放出。",
+      "citation": "Dennis & Van Horn, Programming Semantics for Multiprogrammed Computations (1966)。"
+    },
+    "blast_radius": {
+      "title": "爆炸半径（SRE 实践）",
+      "summary": "执行任何命令前先想「最坏情况下影响多大」。rm -rf / 的爆炸半径是整台机器，fork bomb 是整机可用性——这类命令的护栏是「先确认/先干跑」，而非事后救火。",
+      "citation": "Google SRE Book, Change Management / Blast Radius 实践。"
+    }
+  },
+  "severity_weights": {
+    "极端": 100,
+    "高": 40,
+    "中": 12,
+    "低": 3
+  },
+  "exposure_formula": "命令危险暴露指数 = min(100, Σ 命中严重度权重)；按最坏一项定级（极端>高>中>低），非平均；避免「九个中危+一个极端」被稀释。",
+  "value_quant": {
+    "metric": "避免的误操作恢复工时",
+    "table": {
+      "极端": 8,
+      "高": 4,
+      "中": 1,
+      "低": 0
+    },
+    "rationale": "危险命令的代价在「回车」那一刻就定了。把「没发生的误操作」折算成可感知工时，让防护价值可见（GRC/安全运营标准做法）。"
+  },
+  "defense_stance": "看清后果再决定，不硬禁止——硬禁止会逼用户绕过（--no-verify/裸 root），更糟。不实际拦截任何命令，决策权在人；不感知运行时真实执行情况；不承诺 100%（只是多层防御的工具层）。",
+  "detection_layers": ["fs", "disk", "perm", "proc", "net", "vcs", "safe"]
+}

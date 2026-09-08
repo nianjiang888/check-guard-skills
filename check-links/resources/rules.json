@@ -1,0 +1,112 @@
+{
+  "version": "2.0.0",
+  "domain": "links",
+  "layers": [
+    "import",
+    "fileref",
+    "malformed",
+    "anchor",
+    "placeholder",
+    "empty",
+    "escape",
+    "whitespace",
+    "dupanchor",
+    "safe"
+  ],
+  "rules": [
+    {
+      "id": "LINK-IMPORT-MISSING",
+      "layer": "import",
+      "kind": "importref",
+      "severity": "极端",
+      "intent": "代码/配置里 import/require/include 的目标文件不存在，构建会直接失败",
+      "recoverable": true,
+      "rec": "补上缺失的被引用文件，或修正引用路径"
+    },
+    {
+      "id": "LINK-FILE-MISSING",
+      "layer": "fileref",
+      "kind": "fileref",
+      "severity": "高",
+      "intent": "文档/资源里引用的相对文件不存在（图片、子文档、配置 include）",
+      "recoverable": true,
+      "rec": "补上缺失文件或修正相对路径"
+    },
+    {
+      "id": "LINK-MALFORMED",
+      "layer": "malformed",
+      "kind": "regex",
+      "severity": "高",
+      "intent": "链接语法非法：URL 内含空格，或 www 链接缺少协议头",
+      "pattern": "(?i)(?:https?:(?=//)[^\\s\\\"')>]*\\s[^\\s\\\"')>]*|(?<![:/.])\\bwww\\.[a-z0-9.-]+\\.[a-z]{2,})",
+      "recoverable": true,
+      "rec": "去掉 URL 内空格、给 www 链接补 https 协议头"
+    },
+    {
+      "id": "LINK-ANCHOR-MISSING",
+      "layer": "anchor",
+      "kind": "anchor",
+      "severity": "中",
+      "intent": "页内锚点链接指向的标题/锚点不存在，点击跳转无效",
+      "recoverable": true,
+      "rec": "补上对应标题或修正锚点拼写"
+    },
+    {
+      "id": "LINK-PLACEHOLDER",
+      "layer": "placeholder",
+      "kind": "regex",
+      "severity": "中",
+      "intent": "链接指向示例/占位域名（example/your-domain/placeholder/xxx/dummy），发布后读者打不开",
+      "pattern": "(?i)(?:https?:(?=//)|]\\()(example\\.|your[-_]?domain|placeholder\\.|xxx\\.com|dummy\\.)",
+      "recoverable": true,
+      "rec": "替换为真实地址"
+    },
+    {
+      "id": "LINK-EMPTY",
+      "layer": "empty",
+      "kind": "regex",
+      "severity": "中",
+      "intent": "存在空链接（空 href/src 或 []()），点击无反应",
+      "pattern": "(?i)(?:href|src)\\s*=\\s*[\\\"']\\s*[\\\"']|\\[[^\\]]*\\]\\(\\s*\\)",
+      "recoverable": true,
+      "rec": "补上链接地址或删除空链接"
+    },
+    {
+      "id": "LINK-ESCAPE-ROOT",
+      "layer": "escape",
+      "kind": "escaperef",
+      "severity": "中",
+      "intent": "引用路径逃出仓库根（如 ../../etc），既可能断裂也指向项目外",
+      "recoverable": true,
+      "rec": "改用仓库内的相对路径"
+    },
+    {
+      "id": "LINK-TRAILING-SPACE",
+      "layer": "whitespace",
+      "kind": "regex",
+      "severity": "低",
+      "intent": "链接目标首尾有空白，常被解析器忽略导致打不开",
+      "pattern": "(?i)\\](\\s+[^)]*)\\)|(?:href|src)\\s*=\\s*[\\\"']\\s+[^\\\"']*[\\\"']",
+      "recoverable": true,
+      "rec": "去掉链接目标首尾空白"
+    },
+    {
+      "id": "LINK-DUP-ANCHOR",
+      "layer": "dupanchor",
+      "kind": "dupanchor",
+      "severity": "低",
+      "intent": "同文件多个标题生成相同锚点，跳转会指向第一个",
+      "recoverable": true,
+      "rec": "给重复标题加区分（如加编号）"
+    },
+    {
+      "id": "LINK-CLEAN",
+      "layer": "safe",
+      "kind": "regex",
+      "severity": "低",
+      "intent": "已接入链接检查工具（lychee/markdown-link-check 等），鼓励",
+      "pattern": "(lychee|markdown-link-check|link-check|broken-link|reference-test|checklinks)",
+      "recoverable": true
+    }
+  ]
+}

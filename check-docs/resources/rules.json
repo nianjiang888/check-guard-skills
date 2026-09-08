@@ -1,0 +1,77 @@
+{
+  "version": "2.0.1",
+  "domain": "docs",
+  "layers": [
+    "staleness",
+    "placeholder",
+    "link",
+    "structure",
+    "safe"
+  ],
+  "rules": [
+    {
+      "id": "DOCS-STALE-TODO",
+      "layer": "staleness",
+      "kind": "regex",
+      "severity": "中",
+      "intent": "文档声称已实现/已支持/已完成，却仍含 TODO/FIXME/待办 等未完成标记，文档与代码状态不一致",
+      "req_regex": "(已实现|已支持|已完成|已上线|available)",
+      "req_all": [
+        "(TODO|FIXME|待办|计划中|unimplemented|未实现)"
+      ],
+      "recoverable": true,
+      "rec": "去掉与代码不符的完成声明，或补上对应实现"
+    },
+    {
+      "id": "DOCS-PLACEHOLDER",
+      "layer": "placeholder",
+      "kind": "regex",
+      "severity": "中",
+      "intent": "文档仍含未填占位符（{{}}、TBD、待补充），对外发布会露出半成品",
+      "pattern": "(\\{\\{.*?\\}\\}|\\bTBD\\b|待补充|占位符|coming soon)",
+      "recoverable": true,
+      "rec": "补全占位内容或移除该段落"
+    },
+    {
+      "id": "DOCS-BROKEN-LINK",
+      "layer": "link",
+      "kind": "fileref",
+      "severity": "高",
+      "intent": "文档引用的相对文件/资源不存在，读者点开即 404，文档与仓库实际结构不一致",
+      "recoverable": true,
+      "rec": "修正链接路径或补上被引用的文件"
+    },
+    {
+      "id": "DOCS-ESCAPE-REF",
+      "layer": "link",
+      "kind": "escaperef",
+      "severity": "中",
+      "intent": "文档引用路径用 ../ 逃出仓库根，易指向无关或越权位置",
+      "recoverable": true,
+      "rec": "改为仓库内相对路径"
+    },
+    {
+      "id": "DOCS-HEADING-SKIP",
+      "layer": "structure",
+      "kind": "heading",
+      "severity": "低",
+      "ext": [
+        ".md",
+        ".markdown",
+        ".rst"
+      ],
+      "intent": "Markdown 标题层级跳跃超过一级（如从 # 直接到 ###），大纲结构断裂、可读性差",
+      "recoverable": true,
+      "rec": "补齐中间层级或调整标题级别"
+    },
+    {
+      "id": "DOCS-CLEAN",
+      "layer": "safe",
+      "kind": "regex",
+      "severity": "低",
+      "intent": "已接入文档同步流程（doc-sync/文档与代码一致性/文档生成器），鼓励",
+      "pattern": "(doc-sync|文档与代码一致性|doc-code-consistency|文档同步)",
+      "recoverable": true
+    }
+  ]
+}

@@ -1,0 +1,77 @@
+{
+  "version": "2.0.1",
+  "domain": "api",
+  "layers": [
+    "response",
+    "error",
+    "verb",
+    "auth",
+    "doc",
+    "safe"
+  ],
+  "rules": [
+    {
+      "id": "API-NO-RESPONSE-SCHEMA",
+      "layer": "response",
+      "kind": "regex",
+      "severity": "中",
+      "intent": "接口定义了 get/post 等操作却没写 responses，调用方不知道返回什么",
+      "req_regex": "(get|post|put|delete|patch)",
+      "absent_patterns": ["responses"],
+      "recoverable": true,
+      "rec": "为每个操作补上 responses 定义"
+    },
+    {
+      "id": "API-NO-ERROR-RESPONSE",
+      "layer": "error",
+      "kind": "regex",
+      "severity": "中",
+      "intent": "定义了 responses 却只有 200，没有 4xx/5xx 错误响应，客户端无法处理异常",
+      "req_regex": "responses",
+      "absent_patterns": ["(4[0-9][0-9]|5[0-9][0-9])"],
+      "recoverable": true,
+      "rec": "补充 4xx/5xx 错误响应定义"
+    },
+    {
+      "id": "API-GET-WITH-BODY",
+      "layer": "verb",
+      "kind": "regex",
+      "severity": "高",
+      "intent": "GET 操作带了 requestBody，GET 语义不应有请求体，通常是动词用错",
+      "pattern": "(?is)\\\"get\\\"\\s*:\\s*\\{.{0,400}?\\\"requestBody\\\"",
+      "recoverable": true,
+      "rec": "GET 改为 POST，或去掉 requestBody"
+    },
+    {
+      "id": "API-NO-AUTH",
+      "layer": "auth",
+      "kind": "regex",
+      "severity": "中",
+      "intent": "API 定义了 paths 却全程没有鉴权声明（security/authorization/apiKey 等），接口裸奔",
+      "req_regex": "paths",
+      "absent_patterns": ["(security|authorization|Authorization|apiKey|x-api-key|oauth)"],
+      "recoverable": true,
+      "rec": "为接口补充鉴权方案声明"
+    },
+    {
+      "id": "API-NO-DESCRIPTION",
+      "layer": "doc",
+      "kind": "regex",
+      "severity": "低",
+      "intent": "API 定义了 paths 却没有任何 description，消费者看不懂接口用途",
+      "req_regex": "paths",
+      "absent_patterns": ["description"],
+      "recoverable": true,
+      "rec": "为接口与参数补 description"
+    },
+    {
+      "id": "API-CLEAN",
+      "layer": "safe",
+      "kind": "regex",
+      "severity": "低",
+      "intent": "已接入 API 规范工具（openapi/swagger/pydantic/fastapi 等），鼓励",
+      "pattern": "(openapi|swagger|swagger-ui|redoc|pydantic|fastapi|springfox|drf-spectacular|kin-openapi)",
+      "recoverable": true
+    }
+  ]
+}

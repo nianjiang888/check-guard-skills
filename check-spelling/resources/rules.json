@@ -1,0 +1,85 @@
+{
+  "version": "2.0.0",
+  "domain": "spelling",
+  "layers": [
+    "typo",
+    "repeat",
+    "punct",
+    "heading",
+    "space",
+    "safe"
+  ],
+  "rules": [
+    {
+      "id": "SPELL-AUTH-TYPO",
+      "layer": "typo",
+      "kind": "typo",
+      "dict": "typos.json",
+      "severity": "中",
+      "intent": "常见错别字 / 误用词（如 帐号→账号、登陆→登录、挡案→档案），影响专业度与可读性",
+      "recoverable": true,
+      "rec": "替换为规范写法（见报告括号标注的「错 → 对」）"
+    },
+    {
+      "id": "SPELL-REPEAT-CN",
+      "layer": "repeat",
+      "kind": "regex",
+      "severity": "中",
+      "intent": "中文功能词重复（的的/了了/是是/着着/和和/就就等），几乎都是编辑漏删",
+      "pattern": "(的的|了了|是是|着着|和和|就就|在在|都都|也也|有有|我我|你你|他他|这这|那那)",
+      "recoverable": true,
+      "rec": "删掉多余的那一个字"
+    },
+    {
+      "id": "SPELL-REPEAT-EN",
+      "layer": "repeat",
+      "kind": "regex",
+      "severity": "低",
+      "intent": "英文相邻重复词（the the / is is），多为编辑漏删",
+      "pattern": "\\b([A-Za-z]+)\\s+\\1\\b",
+      "recoverable": true,
+      "rec": "删掉重复的英文词"
+    },
+    {
+      "id": "SPELL-PUNCT-HALF",
+      "layer": "punct",
+      "kind": "regex",
+      "severity": "低",
+      "ext": [".md", ".txt", ".rst", ".markdown"],
+      "intent": "中文后紧跟半角标点（, . ! ? ; :），中文排版应使用全角标点",
+      "pattern": "[\\u4e00-\\u9fff][,.!?;:]",
+      "recoverable": true,
+      "rec": "把半角标点换成对应的全角标点"
+    },
+    {
+      "id": "SPELL-HEADING-SKIP",
+      "layer": "heading",
+      "kind": "heading",
+      "severity": "低",
+      "ext": [".md", ".markdown"],
+      "intent": "Markdown 标题层级跳跃（如无二级直接到三级），影响文档结构与目录生成",
+      "recoverable": true,
+      "rec": "补齐被跳过的层级，或调整标题层级顺序"
+    },
+    {
+      "id": "SPELL-CJK-SPACE",
+      "layer": "space",
+      "kind": "regex",
+      "severity": "低",
+      "ext": [".md", ".txt", ".rst", ".markdown"],
+      "intent": "中英文之间缺少空格，影响可读性与排版一致性",
+      "pattern": "([\\u4e00-\\u9fff][A-Za-z]|[A-Za-z][\\u4e00-\\u9fff])",
+      "recoverable": true,
+      "rec": "在中英文之间补一个空格"
+    },
+    {
+      "id": "SPELL-CLEAN",
+      "layer": "safe",
+      "kind": "regex",
+      "severity": "低",
+      "intent": "已接入拼写 / 排版检查工具（cspell/typos/vale/textlint 等），鼓励",
+      "pattern": "(cspell|typos|misspell|pyspelling|hunspell|vale|proselint|textlint|grammarly)",
+      "recoverable": true
+    }
+  ]
+}

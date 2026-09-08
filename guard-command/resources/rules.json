@@ -1,0 +1,142 @@
+{
+  "version": "2.0.0",
+  "name": "guard-command 高危命令 / 危险参数规则库",
+  "allowlist": {
+    "paths": []
+  },
+  "rules": [
+    {
+      "id": "CMD-RM-RF",
+      "name": "递归强制删除（rm -rf）",
+      "layer": "fs",
+      "category": "文件系统破坏",
+      "severity": "极端",
+      "intent": "rm -rf /、rm -rf ~、rm -rf 任意根路径会整树删除，一旦真跑几乎不可恢复",
+      "recoverable": false,
+      "note": "建议：删除前先列清单确认、用 --dry-run、或移到回收站而非直接删",
+      "pattern": "\\brm\\s+-[a-zA-Z]*[rR][fF]\\b"
+    },
+    {
+      "id": "CMD-DD-DISK",
+      "name": "dd 直写磁盘设备",
+      "layer": "disk",
+      "category": "磁盘/设备",
+      "severity": "极端",
+      "intent": "dd if=... of=/dev/sda 会把源原样覆盖到整块磁盘，数据全毁",
+      "recoverable": false,
+      "note": "建议：dd 目标盘符必须二次确认，禁止对正在使用的设备执行",
+      "pattern": "\\bdd\\b[^;|&\\n]{0,120}\\bof=/dev/"
+    },
+    {
+      "id": "CMD-MKFS",
+      "name": "格式化/分区（mkfs/fdisk/parted）",
+      "layer": "disk",
+      "category": "磁盘/设备",
+      "severity": "极端",
+      "intent": "mkfs/fdisk/parted 对设备执行即重建文件系统，原数据报废",
+      "recoverable": false,
+      "note": "建议：格式化前必须确认盘符与备份，禁止对生产盘执行",
+      "pattern": "\\b(?:mkfs|fdisk|parted|mkswap|cfdisk|mkfs\\.\\w+)\\b"
+    },
+    {
+      "id": "CMD-DEV-REDIRECT",
+      "name": "输出重定向到设备文件",
+      "layer": "disk",
+      "category": "磁盘/设备",
+      "severity": "极端",
+      "intent": "> /dev/sda 之类把命令输出直接写进块设备，等同于覆写磁盘",
+      "recoverable": false,
+      "note": "建议：重定向目标必须是普通文件路径，禁止指向 /dev/*",
+      "pattern": ">\\s*/dev/(?:sd|hd|nvme|vda|sda|sdb|hda|hdb|loop)"
+    },
+    {
+      "id": "CMD-FORKBOMB",
+      "name": "fork bomb（进程炸弹）",
+      "layer": "proc",
+      "category": "进程自杀",
+      "severity": "极端",
+      "intent": ":(){ :|:& };: 无限衍生子进程，瞬间打满系统拖垮整机",
+      "recoverable": false,
+      "note": "建议：禁止在脚本里出现该模式；限制用户进程数（ulimit -u）",
+      "pattern": ":\\(\\)\\{[^}]*?:\\|:&\\};:"
+    },
+    {
+      "id": "CMD-CHMOD-777",
+      "name": "chmod 777（全员可写）",
+      "layer": "perm",
+      "category": "权限/提权",
+      "severity": "高",
+      "intent": "chmod 777 / -R 777 把对象开放给所有人写，任意用户可篡改或植入",
+      "recoverable": true,
+      "note": "建议：按最小权限给组/属主，避免 777",
+      "pattern": "\\bchmod\\b[^;&\\n]{0,40}\\b777\\b"
+    },
+    {
+      "id": "CMD-CHMOD-000",
+      "name": "chmod 000（自我锁死）",
+      "layer": "perm",
+      "category": "权限/提权",
+      "severity": "高",
+      "intent": "chmod 000 让属主自己也失去读写执行权限，运维锁死",
+      "recoverable": true,
+      "note": "建议：如需降权用 600/640，避免 000",
+      "pattern": "\\bchmod\\b[^;&\\n]{0,40}\\b000\\b"
+    },
+    {
+      "id": "CMD-SUDO-SU",
+      "name": "提权切换（sudo su / su -）",
+      "layer": "perm",
+      "category": "权限/提权",
+      "severity": "高",
+      "intent": "sudo su / sudo -i / su - 直接拿到 root，之后所有操作都在最高权限下，破坏最小权限原则",
+      "recoverable": true,
+      "note": "建议：按需 sudo 单条命令，避免常驻 root shell；脚本勿无脑 sudo",
+      "pattern": "\\b(?:sudo\\s+su|sudo\\s+-i|sudo\\s+-s|su\\s+-|sudo\\s+root)\\b"
+    },
+    {
+      "id": "CMD-PIPE-SH",
+      "name": "网络下载直输 shell（curl|sh）",
+      "layer": "net",
+      "category": "网络执行",
+      "severity": "高",
+      "intent": "curl 远端地址 | sh 把远端脚本不经审查直接执行，等于把机器交给来源方",
+      "recoverable": true,
+      "note": "建议：先下载到本地审读再执行，或走签名校验的包管理器",
+      "pattern": "(?:curl|wget)\\b[^;|&\\n]{0,120}\\|\\s*(?:ba)?sh\\b"
+    },
+    {
+      "id": "CMD-VCS-FORCE",
+      "name": "版本历史破坏（git --force/reset --hard/clean）",
+      "layer": "vcs",
+      "category": "版本控制",
+      "severity": "高",
+      "intent": "git push --force / reset --hard / clean -fdx 会丢弃提交或工作区，历史难追回",
+      "recoverable": true,
+      "note": "建议：force push 走 --force-with-lease；reset 前先建临时分支备份",
+      "pattern": "\\bgit\\s+(?:push\\s+--force|reset\\s+--hard|clean\\s+-[a-zA-Z]*fdx|push\\s+-f)\\b"
+    },
+    {
+      "id": "CMD-NO-VERIFY",
+      "name": "绕过钩子（--no-verify）",
+      "layer": "vcs",
+      "category": "版本控制",
+      "severity": "中",
+      "intent": "git commit --no-verify / pre-commit 钩子被跳过，质量门与签名检查形同虚设",
+      "recoverable": true,
+      "note": "建议：仅在确知后果时临时用，CI 侧仍要卡钩子",
+      "pattern": "(?<![-\\w])--no-verify\\b"
+    },
+    {
+      "id": "CMD-SAFE-DRYRUN",
+      "name": "干跑/确认（安全变体）",
+      "layer": "safe",
+      "category": "安全变体",
+      "severity": "低",
+      "intent": "命令带 --dry-run 或 rm -n，先看会动什么再真跑，是好做法，不当命中",
+      "recoverable": true,
+      "note": "鼓励信号",
+      "pattern": "\\b(?:--dry-run|rm\\s+-n)\\b",
+      "safe_signal": true
+    }
+  ]
+}

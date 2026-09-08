@@ -1,0 +1,714 @@
+{
+  "version": "1.0.0",
+  "meta": {
+    "authority": [
+      "GB/T 9704-2012《党政机关公文格式》（国家质量监督检验检疫总局、国家标准化管理委员会 2012-06-29 发布，2012-07-01 实施，现行有效）",
+      "《党政机关公文处理工作条例》（中办发〔2012〕14号，中共中央办公厅、国务院办公厅 2012-04-16 印发，2012-07-01 施行）"
+    ],
+    "structure": "公文格式 18 个要素分三部分：版头 6 个（份号、密级和保密期限、紧急程度、发文机关标志、发文字号、签发人）、主体 9 个（标题、主送机关、正文、附件说明、发文机关署名、成文日期、印章、附注、附件）、版记 2 个（抄送机关、印发机关和印发日期）、版心外 1 个（页码）",
+    "note": "auto 类规则由引擎自动判定；manual 类是国标规定但纯文本无法判定的项（字体字号、页边距、印章位置等），输出为人工核对清单"
+  },
+  "rules": [
+    {
+      "id": "docnum_bracket_wrong",
+      "layer": "版头",
+      "severity": "高",
+      "recoverable": true,
+      "basis": "GB/T 9704-2012 7.2.5",
+      "intent": "发文字号年份未用六角括号〔〕，误用中括号或方头括号",
+      "rec": "将 [2026]【2026】 改为 〔2026〕。六角括号不是中括号，也不是方头括号，这是最常见的排版错误",
+      "kind": "regex",
+      "pattern": "[\\[【]\\s*(19|20)\\d{2}\\s*[\\]】]\\s*\\d*\\s*号?",
+      "ext": [
+        ".md",
+        ".txt"
+      ]
+    },
+    {
+      "id": "docnum_year_short",
+      "layer": "版头",
+      "severity": "中",
+      "recoverable": true,
+      "basis": "GB/T 9704-2012 7.2.5",
+      "intent": "发文字号年份未标全称（如 〔26〕）",
+      "rec": "年份应标全称，〔26〕 改为 〔2026〕",
+      "kind": "regex",
+      "pattern": "〔\\s*\\d{2}\\s*〕\\s*\\d+\\s*号",
+      "ext": [
+        ".md",
+        ".txt"
+      ]
+    },
+    {
+      "id": "docnum_leading_zero",
+      "layer": "版头",
+      "severity": "中",
+      "recoverable": true,
+      "basis": "GB/T 9704-2012 7.2.5",
+      "intent": "发文顺序号编了虚位（如 01 号）",
+      "rec": "顺序号不编虚位，〔2026〕01号 改为 〔2026〕1号",
+      "kind": "regex",
+      "pattern": "〔\\s*(19|20)\\d{2}\\s*〕\\s*0\\d+\\s*号",
+      "ext": [
+        ".md",
+        ".txt"
+      ]
+    },
+    {
+      "id": "docnum_di_char",
+      "layer": "版头",
+      "severity": "中",
+      "recoverable": true,
+      "basis": "GB/T 9704-2012 7.2.5",
+      "intent": "发文顺序号前加了「第」字",
+      "rec": "顺序号不加「第」字，〔2026〕第1号 改为 〔2026〕1号",
+      "kind": "regex",
+      "pattern": "〔\\s*(19|20)\\d{2}\\s*〕\\s*第\\s*\\d+",
+      "ext": [
+        ".md",
+        ".txt"
+      ]
+    },
+    {
+      "id": "signer_missing_upward",
+      "layer": "版头",
+      "severity": "高",
+      "recoverable": true,
+      "basis": "GB/T 9704-2012 7.2.6；《党政机关公文处理工作条例》第九条",
+      "intent": "上行文（请示、报告）未标注签发人",
+      "rec": "上行文应当标注签发人，由「签发人」三字加全角冒号和姓名组成，居右空一字；「签发人」三字用 3 号仿宋，姓名用 3 号楷体",
+      "kind": "regex",
+      "req_regex": "关于[\\s\\S]{0,60}的\\s*(请示|报告)",
+      "absent_patterns": [
+        "签发人"
+      ],
+      "ext": [
+        ".md",
+        ".txt"
+      ]
+    },
+    {
+      "id": "seal_line_position",
+      "layer": "版头",
+      "severity": "低",
+      "recoverable": true,
+      "basis": "GB/T 9704-2012 7.2.7",
+      "intent": "版头红色分隔线位置需核对（发文字号之下 4mm）",
+      "rec": "发文字号之下 4mm 处居中印一条与版心等宽的红色分隔线",
+      "kind": "manual",
+      "standard": "发文字号之下 4mm，与版心等宽，红色",
+      "ext": [
+        ".md",
+        ".txt"
+      ]
+    },
+    {
+      "id": "title_bookname_abuse",
+      "layer": "主体",
+      "severity": "中",
+      "recoverable": true,
+      "basis": "GB/T 9704-2012 7.3.1",
+      "intent": "标题中给非法规规章名称加了书名号",
+      "rec": "标题中除法规、规章名称加书名号外一般不用标点。方案、计划、要点、清单不是法规规章，不加书名号。注意：正文里引用文件时加书名号是正确的，本条只查标题",
+      "kind": "regex",
+      "pattern": "《[^》]{0,60}(印发|转发|批转)[^》]{0,60}》|关于\\s*《[^》]{0,60}(方案|计划|要点|清单|安排)[^》]{0,20}》",
+      "ext": [
+        ".md",
+        ".txt"
+      ]
+    },
+    {
+      "id": "level_num_dunhao",
+      "layer": "主体",
+      "severity": "中",
+      "recoverable": true,
+      "basis": "GB/T 9704-2012 7.3.3",
+      "intent": "结构层次序数第三层用了顿号（1、）",
+      "rec": "第三层序数用阿拉伯数字加小圆点「1.」，不是顿号「1、」",
+      "kind": "regex",
+      "pattern": "^\\s*\\d{1,2}\\s*、\\s*\\S",
+      "ext": [
+        ".md",
+        ".txt"
+      ]
+    },
+    {
+      "id": "level_cn_comma",
+      "layer": "主体",
+      "severity": "中",
+      "recoverable": true,
+      "basis": "GB/T 9704-2012 7.3.3",
+      "intent": "结构层次序数第一层未用顿号（一、）",
+      "rec": "第一层序数用汉字加顿号「一、」，不是逗号也不是下圆点",
+      "kind": "regex",
+      "pattern": "^\\s*[一二三四五六七八九十]+\\s*[，,]\\s*\\S",
+      "ext": [
+        ".md",
+        ".txt"
+      ]
+    },
+    {
+      "id": "attach_desc_punct",
+      "layer": "主体",
+      "severity": "中",
+      "recoverable": true,
+      "basis": "GB/T 9704-2012 7.3.4",
+      "intent": "附件说明中附件名称后加了标点符号",
+      "rec": "附件名称后不加标点符号",
+      "kind": "regex",
+      "pattern": "附件\\s*[:：][^\\n]*[。；;]\\s*$",
+      "ext": [
+        ".md",
+        ".txt"
+      ]
+    },
+    {
+      "id": "attach_desc_no_colon",
+      "layer": "主体",
+      "severity": "低",
+      "recoverable": true,
+      "basis": "GB/T 9704-2012 7.3.4",
+      "intent": "附件说明「附件」二字后缺全角冒号",
+      "rec": "「附件」二字后标全角冒号，如「附件：1. XXXX」",
+      "kind": "regex",
+      "pattern": "^\\s*附件(?!\\s*[:：])",
+      "ext": [
+        ".md",
+        ".txt"
+      ]
+    },
+    {
+      "id": "date_chinese_numeral",
+      "layer": "主体",
+      "severity": "高",
+      "recoverable": true,
+      "basis": "GB/T 9704-2012 7.3.5.4",
+      "intent": "成文日期使用了汉字数字",
+      "rec": "成文日期用阿拉伯数字将年、月、日标全。旧标准用汉字「二〇二六年」，2012 版已改为阿拉伯数字，这是新旧标准交替期最高频的错误",
+      "kind": "regex",
+      "pattern": "[〇零一二三四五六七八九十]{2,}\\s*年\\s*[〇零一二三四五六七八九十]{1,3}\\s*月",
+      "ext": [
+        ".md",
+        ".txt"
+      ]
+    },
+    {
+      "id": "date_padded_zero",
+      "layer": "主体",
+      "severity": "中",
+      "recoverable": true,
+      "basis": "GB/T 9704-2012 7.3.5.4",
+      "intent": "成文日期月或日编了虚位（如 2026年09月06日）",
+      "rec": "月、日不编虚位，09 月 06 日改为 9 月 6 日",
+      "kind": "regex",
+      "pattern": "(19|20)\\d{2}\\s*年\\s*0\\d\\s*月|(19|20)\\d{2}\\s*年\\s*\\d{1,2}\\s*月\\s*0\\d\\s*日",
+      "ext": [
+        ".md",
+        ".txt"
+      ]
+    },
+    {
+      "id": "date_year_short",
+      "layer": "主体",
+      "severity": "中",
+      "recoverable": true,
+      "basis": "GB/T 9704-2012 7.3.5.4",
+      "intent": "成文日期年份未标全称（如 26年9月6日）",
+      "rec": "年份应标全称，26年 改为 2026年",
+      "kind": "regex",
+      "pattern": "(?:^|[^\\d])\\d{2}\\s*年\\s*\\d{1,2}\\s*月\\s*\\d{1,2}\\s*日",
+      "ext": [
+        ".md",
+        ".txt"
+      ]
+    },
+    {
+      "id": "no_signature_block",
+      "layer": "主体",
+      "severity": "高",
+      "recoverable": true,
+      "basis": "GB/T 9704-2012 7.3.5；《党政机关公文处理工作条例》第九条",
+      "intent": "全文未检出具日期的落款，发文机关署名或成文日期可能缺失",
+      "rec": "2012 版新增发文机关署名为法定要素。成文日期署会议通过或机关负责人签发日期，联合行文署最后签发机关负责人签发日期",
+      "kind": "regex",
+      "absent_patterns": [
+        "(19|20)\\d{2}\\s*年\\s*\\d{1,2}\\s*月"
+      ],
+      "ext": [
+        ".md",
+        ".txt"
+      ]
+    },
+    {
+      "id": "note_no_bracket",
+      "layer": "主体",
+      "severity": "低",
+      "recoverable": true,
+      "basis": "GB/T 9704-2012 7.3.6",
+      "intent": "标注了「附注」字样",
+      "rec": "国标为直接加圆括号编排在成文日期下一行，不标「附注」二字，如「（此件公开发布）」",
+      "kind": "regex",
+      "pattern": "^\\s*附注",
+      "ext": [
+        ".md",
+        ".txt"
+      ]
+    },
+    {
+      "id": "copy_no_period",
+      "layer": "版记",
+      "severity": "中",
+      "recoverable": true,
+      "basis": "GB/T 9704-2012 7.4.2",
+      "intent": "抄送机关末尾未标句号",
+      "rec": "最后一个抄送机关名称后标句号",
+      "kind": "regex",
+      "pattern": "^\\s*抄送\\s*[:：][^\\n]*[^\\s。；;]$",
+      "ext": [
+        ".md",
+        ".txt"
+      ]
+    },
+    {
+      "id": "copy_no_colon",
+      "layer": "版记",
+      "severity": "低",
+      "recoverable": true,
+      "basis": "GB/T 9704-2012 7.4.2",
+      "intent": "「抄送」二字后缺全角冒号",
+      "rec": "「抄送」二字后加全角冒号和抄送机关名称，回行时与冒号后首字对齐",
+      "kind": "regex",
+      "pattern": "^\\s*抄送(?!\\s*[:：])",
+      "ext": [
+        ".md",
+        ".txt"
+      ]
+    },
+    {
+      "id": "issue_block_missing",
+      "layer": "版记",
+      "severity": "中",
+      "recoverable": true,
+      "basis": "GB/T 9704-2012 7.4.3",
+      "intent": "版记未检出「年月日印发」格式的印发日期",
+      "rec": "印发机关和印发日期用 4 号仿宋编排在末条分隔线之上，印发机关左空一字，印发日期右空一字，日期后加「印发」二字，如「2026年9月6日印发」",
+      "kind": "regex",
+      "ext": [
+        ".md",
+        ".txt"
+      ],
+      "absent_patterns": [
+        "(19|20)\\d{2}\\s*年\\s*\\d{1,2}\\s*月\\s*\\d{1,2}\\s*日\\s*印发"
+      ]
+    },
+    {
+      "id": "theme_word_left",
+      "layer": "通用",
+      "severity": "高",
+      "recoverable": true,
+      "basis": "GB/T 9704-2012 前言（相对 GB/T 9704-1999 删除主题词格式要素）",
+      "intent": "仍保留了「主题词」要素",
+      "rec": "2012 版已删除主题词。仍在使用说明模板沿用的是 1999 版旧格式，需整份按新标准重排",
+      "kind": "regex",
+      "pattern": "^\\s*主题词\\s*[:：]?",
+      "ext": [
+        ".md",
+        ".txt"
+      ]
+    },
+    {
+      "id": "blank_page_note",
+      "layer": "通用",
+      "severity": "中",
+      "recoverable": true,
+      "basis": "GB/T 9704-2012 7.3.3",
+      "intent": "出现「此页无正文」标注",
+      "rec": "公文首页必须显示正文。出现空白页说明版式安排不当，应调整行距字距使正文提前，而非用「此页无正文」搪塞",
+      "kind": "regex",
+      "pattern": "此页无正文|此页空白|（此页无正文）",
+      "ext": [
+        ".md",
+        ".txt"
+      ]
+    },
+    {
+      "id": "doctype_illegal",
+      "layer": "文种",
+      "severity": "高",
+      "recoverable": true,
+      "basis": "《党政机关公文处理工作条例》第八条",
+      "intent": "使用了 15 种法定文种之外的文种",
+      "rec": "法定文种为决议、决定、命令（令）、公报、公告、通告、意见、通知、通报、报告、请示、批复、议案、函、纪要。「申请」应为「请示」，「答复」应为「批复」，「说明」「汇报」不是法定文种",
+      "kind": "regex",
+      "pattern": "^\\s*关于[\\s\\S]{0,60}的\\s*(申请|说明|汇报|请求|建议书|答复|回复|工作安排)\\s*$",
+      "ext": [
+        ".md",
+        ".txt"
+      ]
+    },
+    {
+      "id": "minutes_redundant_prefix",
+      "layer": "文种",
+      "severity": "低",
+      "recoverable": true,
+      "basis": "《党政机关公文处理工作条例》第八条（十五）",
+      "intent": "文种写作「会议纪要」",
+      "rec": "2012 版条例已将文种定名为「纪要」，去掉「会议」二字",
+      "kind": "regex",
+      "pattern": "^\\s*[\\s\\S]{0,30}会议纪要\\s*$",
+      "ext": [
+        ".md",
+        ".txt"
+      ]
+    },
+    {
+      "id": "m_paper_margin",
+      "layer": "版心",
+      "severity": "中",
+      "recoverable": true,
+      "basis": "GB/T 9704-2012 5.2.1",
+      "intent": "页边距与版心尺寸需核对",
+      "rec": "页面设置核对：上 37mm、下 35mm、左 28mm、右 26mm",
+      "kind": "manual",
+      "standard": "天头（上白边）37mm±1mm，订口（左白边）28mm±1mm，版心 156mm×225mm",
+      "ext": [
+        ".md",
+        ".txt"
+      ]
+    },
+    {
+      "id": "m_body_font",
+      "layer": "版心",
+      "severity": "高",
+      "recoverable": true,
+      "basis": "GB/T 9704-2012 5.2.2",
+      "intent": "正文字体字号需核对",
+      "rec": "全选正文核对字体字号，这是最容易被检查出的一项",
+      "kind": "manual",
+      "standard": "3 号仿宋体字（_GB2312 或 仿宋），特定情况可作适当调整",
+      "ext": [
+        ".md",
+        ".txt"
+      ]
+    },
+    {
+      "id": "m_line_char_count",
+      "layer": "版心",
+      "severity": "中",
+      "recoverable": true,
+      "basis": "GB/T 9704-2012 5.2.3",
+      "intent": "每面行数与每行字数需核对",
+      "rec": "在页面设置中设文档网格：每面 22 行、每行 28 字，并撑满版心",
+      "kind": "manual",
+      "standard": "一般每面排 22 行，每行排 28 个字，并撑满版心",
+      "ext": [
+        ".md",
+        ".txt"
+      ]
+    },
+    {
+      "id": "m_title_font",
+      "layer": "版心",
+      "severity": "高",
+      "recoverable": true,
+      "basis": "GB/T 9704-2012 7.3.1",
+      "intent": "标题字体字号需核对",
+      "rec": "标题居中排布，回行时词意完整、排列对称，用梯形或菱形",
+      "kind": "manual",
+      "standard": "2 号小标宋体字，编排于红色分隔线下空二行，分一行或多行居中排布",
+      "ext": [
+        ".md",
+        ".txt"
+      ]
+    },
+    {
+      "id": "m_level_font",
+      "layer": "版心",
+      "severity": "中",
+      "recoverable": true,
+      "basis": "GB/T 9704-2012 7.3.3",
+      "intent": "结构层次序数的字体需核对",
+      "rec": "公文用到的字体一般就三种，不应出现加粗、加黑以外的花体",
+      "kind": "manual",
+      "standard": "第一层「一、」用黑体字，第二层「（一）」用楷体字，第三层「1.」和第四层「（1）」用仿宋体字",
+      "ext": [
+        ".md",
+        ".txt"
+      ]
+    },
+    {
+      "id": "m_indent",
+      "layer": "版心",
+      "severity": "中",
+      "recoverable": true,
+      "basis": "GB/T 9704-2012 7.3.3",
+      "intent": "正文段落缩进需核对",
+      "rec": "不要用空格敲缩进，用段落首行缩进 2 字符",
+      "kind": "manual",
+      "standard": "每个自然段左空二字，回行顶格",
+      "ext": [
+        ".md",
+        ".txt"
+      ]
+    },
+    {
+      "id": "m_signer_font",
+      "layer": "版心",
+      "severity": "中",
+      "recoverable": true,
+      "basis": "GB/T 9704-2012 7.2.6",
+      "intent": "签发人字体需核对",
+      "rec": "「签发人」三字与姓名用不同字体，容易统一成一种",
+      "kind": "manual",
+      "when_regex": "签发人",
+      "standard": "「签发人」三字用 3 号仿宋体字，签发人姓名用 3 号楷体字，居右空一字",
+      "ext": [
+        ".md",
+        ".txt"
+      ]
+    },
+    {
+      "id": "m_docnum_font",
+      "layer": "版心",
+      "severity": "中",
+      "recoverable": true,
+      "basis": "GB/T 9704-2012 7.2.5",
+      "intent": "发文字号编排位置需核对",
+      "rec": "居中排布；上行文居左空一字，与最后一个签发人姓名同处一行",
+      "kind": "manual",
+      "standard": "编排在发文机关标志下空二行位置，居中排布；上行文居左空一字编排",
+      "ext": [
+        ".md",
+        ".txt"
+      ]
+    },
+    {
+      "id": "m_org_mark",
+      "layer": "版心",
+      "severity": "中",
+      "recoverable": true,
+      "basis": "GB/T 9704-2012 7.2.4",
+      "intent": "发文机关标志位置与颜色需核对",
+      "rec": "红头文件的红头，位置和颜色都有讲究",
+      "kind": "manual",
+      "standard": "居中排布，上边缘至版心上边缘为 35mm，推荐使用小标宋体字，颜色为红色",
+      "ext": [
+        ".md",
+        ".txt"
+      ]
+    },
+    {
+      "id": "m_main_org",
+      "layer": "版心",
+      "severity": "中",
+      "recoverable": true,
+      "basis": "GB/T 9704-2012 7.3.2",
+      "intent": "主送机关编排需核对",
+      "rec": "主送机关过多导致首页不能显示正文时，移至版记放在抄送上一行",
+      "kind": "manual",
+      "standard": "编排于标题下空一行，居左顶格，回行仍顶格，最后一个机关名称后标全角冒号",
+      "ext": [
+        ".md",
+        ".txt"
+      ]
+    },
+    {
+      "id": "m_attach_indent",
+      "layer": "版心",
+      "severity": "低",
+      "recoverable": true,
+      "basis": "GB/T 9704-2012 7.3.4",
+      "intent": "附件说明缩进需核对",
+      "rec": "附件名称较长回行时，与上一行附件名称首字对齐",
+      "kind": "manual",
+      "when_regex": "附件",
+      "standard": "正文下空一行左空二字编排「附件」，后标全角冒号和附件名称",
+      "ext": [
+        ".md",
+        ".txt"
+      ]
+    },
+    {
+      "id": "m_signature_pos",
+      "layer": "版心",
+      "severity": "高",
+      "recoverable": true,
+      "basis": "GB/T 9704-2012 7.3.5.1",
+      "intent": "发文机关署名与成文日期位置需核对",
+      "rec": "成文日期右空四字（旧标准为空两字，2012 版改为四字），署名以成文日期为准居中",
+      "kind": "manual",
+      "standard": "成文日期一般右空四字编排，发文机关署名以成文日期为准居中编排在其上方",
+      "ext": [
+        ".md",
+        ".txt"
+      ]
+    },
+    {
+      "id": "m_seal",
+      "layer": "版心",
+      "severity": "高",
+      "recoverable": false,
+      "basis": "GB/T 9704-2012 7.3.5.1",
+      "intent": "印章位置与效果需核对",
+      "rec": "空白印章是硬伤。所剩空白容不下印章时可调整行距字距解决",
+      "kind": "manual",
+      "standard": "印章用红色，不得出现空白印章；端正居中下压发文机关署名和成文日期，顶端上距正文（或附件说明）一行之内",
+      "ext": [
+        ".md",
+        ".txt"
+      ]
+    },
+    {
+      "id": "m_attach_page",
+      "layer": "版心",
+      "severity": "中",
+      "recoverable": true,
+      "basis": "GB/T 9704-2012 7.3.7",
+      "intent": "附件编排需核对",
+      "rec": "附件与正文一起装订时页码连续编排",
+      "kind": "manual",
+      "when_regex": "附件",
+      "standard": "附件另面编排，在版记之前与正文一起装订；「附件」二字及顺序号用 3 号黑体顶格编排在版心左上角第一行，附件标题居中编排在第三行",
+      "ext": [
+        ".md",
+        ".txt"
+      ]
+    },
+    {
+      "id": "m_version_rule",
+      "layer": "版心",
+      "severity": "中",
+      "recoverable": true,
+      "basis": "GB/T 9704-2012 7.4.1",
+      "intent": "版记分隔线粗细需核对",
+      "rec": "首条和末条粗线，中间细线，与版心等宽",
+      "kind": "manual",
+      "standard": "分隔线与版心等宽，首条和末条用粗线（推荐 0.35mm），中间用细线（推荐 0.25mm）",
+      "ext": [
+        ".md",
+        ".txt"
+      ]
+    },
+    {
+      "id": "m_copy_font",
+      "layer": "版心",
+      "severity": "低",
+      "recoverable": true,
+      "basis": "GB/T 9704-2012 7.4.2",
+      "intent": "抄送机关字体字号需核对",
+      "rec": "印发机关和印发日期之上一行，左右各空一字",
+      "kind": "manual",
+      "when_regex": "抄送",
+      "standard": "一般用 4 号仿宋体字",
+      "ext": [
+        ".md",
+        ".txt"
+      ]
+    },
+    {
+      "id": "m_issue_font",
+      "layer": "版心",
+      "severity": "低",
+      "recoverable": true,
+      "basis": "GB/T 9704-2012 7.4.3",
+      "intent": "印发机关和印发日期字体字号需核对",
+      "rec": "编排在末条分隔线之上，印发机关左空一字，印发日期右空一字",
+      "kind": "manual",
+      "when_regex": "印发",
+      "standard": "一般用 4 号仿宋体字",
+      "ext": [
+        ".md",
+        ".txt"
+      ]
+    },
+    {
+      "id": "m_page_num",
+      "layer": "版心",
+      "severity": "中",
+      "recoverable": true,
+      "basis": "GB/T 9704-2012 7.5",
+      "intent": "页码编排需核对",
+      "rec": "数字左右各放一条一字线，版记页前有空白页的，空白页和版记页均不编排页码",
+      "kind": "manual",
+      "standard": "4 号半角宋体阿拉伯数字，编排在版心下边缘之下，数字左右各放一条一字线，一字线上距版心下边缘 7mm；单页码居右空一字，双页码居左空一字",
+      "ext": [
+        ".md",
+        ".txt"
+      ]
+    },
+    {
+      "id": "m_letter_format",
+      "layer": "版心",
+      "severity": "低",
+      "recoverable": true,
+      "basis": "GB/T 9704-2012 10.1",
+      "intent": "若为信函格式，需单独核对其特定要求",
+      "rec": "信函格式与通用格式差异较大，勿混用",
+      "kind": "manual",
+      "when_regex": "信函",
+      "standard": "发文机关标志上边缘至上页边 30mm；标志下 4mm 处印红色双线（上粗下细），距下页边 20mm 处印红色双线（上细下粗），线长 170mm；首页不显示页码；版记不加印发机关和印发日期",
+      "ext": [
+        ".md",
+        ".txt"
+      ]
+    },
+    {
+      "id": "m_command_format",
+      "layer": "版心",
+      "severity": "低",
+      "recoverable": true,
+      "basis": "GB/T 9704-2012 10.2",
+      "intent": "若为命令（令）格式，需核对其特定要求",
+      "rec": "令号与正文的间距容易排错",
+      "kind": "manual",
+      "when_regex": "命令|第\\s*\\d+\\s*号\\s*令",
+      "standard": "发文机关标志由机关全称加「命令」或「令」组成，上边缘至版心上边缘 20mm；标志下空二行居中编排令号，令号下空二行编排正文",
+      "ext": [
+        ".md",
+        ".txt"
+      ]
+    },
+    {
+      "id": "m_minutes_format",
+      "layer": "版心",
+      "severity": "低",
+      "recoverable": true,
+      "basis": "GB/T 9704-2012 10.3",
+      "intent": "若为纪要格式，需核对其特定要求",
+      "rec": "出席、请假、列席人员名单的编排有固定格式",
+      "kind": "manual",
+      "when_regex": "纪要",
+      "standard": "纪要标志居中排布，上边缘至版心上边缘 35mm；「出席」二字用 3 号黑体在正文下空一行左空二字编排，后标全角冒号，冒号后用 3 号仿宋标注出席人单位、姓名",
+      "ext": [
+        ".md",
+        ".txt"
+      ]
+    },
+    {
+      "id": "m_quote_order",
+      "layer": "通用",
+      "severity": "中",
+      "recoverable": true,
+      "basis": "公文处理实务惯例，配合 GB/T 9704-2012 7.3.3",
+      "intent": "引用其他公文时的顺序需核对",
+      "rec": "很多文件把发文字号写在标题前面，或只写标题不写文号",
+      "kind": "manual",
+      "standard": "先引标题，后引发文字号",
+      "ext": [
+        ".md",
+        ".txt"
+      ]
+    },
+    {
+      "id": "safe_selfcheck_signal",
+      "layer": "safe",
+      "severity": "低",
+      "recoverable": true,
+      "basis": "—",
+      "intent": "已接入公文格式终检基线（鼓励信号，仅正向标记）",
+      "rec": "保持每次印发前过一遍的习惯",
+      "kind": "regex",
+      "pattern": "格式终检|公文格式自查|印发前检查"
+    }
+  ]
+}
